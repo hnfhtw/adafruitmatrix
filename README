@@ -1,0 +1,13 @@
+Adafruit RGB LED Panel Framebuffer
+
+NOTE:
+Files in testbench (tb) and simulation (sim) folders not up to date.
+Currently support only for 1, 2 or 4 panel columns (panels switched in series), but multiple panel rows
+
+TODO:
+Tidy up rtl/ctrl.vhd
+    -> 1 counter module, 4 instantiations
+	-> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
+Check support of number of panel columns other than 1, 2 or 4
+Add output regs to RAM blocks to improve timing
+Implement some "image download mechanism"
