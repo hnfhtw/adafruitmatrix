@@ -29,15 +29,12 @@ The colors are packed the following way:
 
     $ ./pnm2mif [width] [height] [0 or 1 (for upper or lower halfimage)] < inputfilename.pnm > outputfilename.mif
 
-    bits-per-color  The desired color bit width (for one color channel)
+    width           Width of the image in pixels (64, 96, 128)
 
-    split-rows      Split the output in RAM blocks of the specified number of
-                    rows. As output is printed to the console, you need to
-                    split it to multiple files. For this purpose, ppm2mif
-                    places a marker at each start of a RAM file: "##START".
-                    You can split the RAM files e.g. using 
-                    
-                    ppm2mif [ARGS] | csplit -f ram -b '%02d.mif' -z - '/##START/' '{*}'
+    height          Height of the image in pixels (currently only 32 supported)
+	
+	0 or 1			0 creates the *.mif file for the upper half panel, 1 for the lower half panel -> two executions of pnm2mif needed for one image
+                   
 
 ### Example ###
 	
