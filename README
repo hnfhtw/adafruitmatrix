@@ -1,13 +1,43 @@
 Adafruit RGB LED Panel Framebuffer
 
-NOTE:
-Files in testbench (tb) and simulation (sim) folders not up to date.
-Currently support only for 1, 2 or 4 panel columns (panels switched in series), but multiple panel rows
+CHANGELOG:
+V01: Support only for 1, 2 or 4 panel columns (panels switched in series), but multiple panel rows
+V02: Support for 3 or 5 panel columns enabled:
+	 ctrl.vhd: 		Addressing of framebuffer changed from RRRR PP XXXXX to PP RRRR XXXXX
+					(with RRRR = 4 address bits A-D, PP = panel number, XXXXX = 5 Bits for pixel number)
+					Panel counter had to be changed, overflow counter could count only to 2^n
+	 matrix.vhd: 	MIF files had to be changed due to new framebuffer address format.
+					
+					Old format of addresses(example for 128x16 -> upper half of a 128x32 image):
+					0 ....... 31 32 ....... 63 64 ....... 95 96 ....... 127
+					128 .... 159 160 ..... 191 192 ..... 223 224 ...... 255
+					.													  .
+					.	Panel 1		 Panel 2	   Panel 3		Panel 4	  .
+					.													  .
+					1920 .. 1951 1952 ... 1983 1984 ... 2015 2016 .... 2047
+					
+					New format of addresses(example for 128x16 -> upper half of a 128x32 image):
+					0 ....... 31 512 ..... 543 1024 ... 1055 1536 .... 1567
+					32 ...... 63 544 ..... 575 1056 ... 1087 1568 .... 1599	
+					.													  .
+					.	Panel 1		 Panel 2	   Panel 3		Panel 4	  .
+					.													  .
+					480 ..... 511 992 ... 1023 1504 ... 1535 2016 .... 2047
+
 
 TODO:
 Tidy up rtl/ctrl.vhd
     -> 1 counter module, 4 instantiations
 	-> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
-Check support of number of panel columns other than 1, 2 or 4
+Check 1 Pixel shift (currently the pixels are shifted by 1 too far -> clock  topic or code issue?)
 Add output regs to RAM blocks to improve timing
 Implement some "image download mechanism"
+
+
+NOTES:
+Files in testbench (tb) and simulation (sim) folders not up to date.
+
+
+LAST MODIFIED:
+V01: 30.03.2016
+V02: 31.03.2016

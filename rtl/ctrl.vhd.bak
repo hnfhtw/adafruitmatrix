@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 31.03.2016
+-- Last modified: 30.03.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -27,11 +27,11 @@ entity ctrl is
 
 	generic 
 	 (
-		NO_PANEL_ROWS : natural;					-- number of panel rows
-		NO_PANEL_COLUMNS : natural;				-- number of panel columns
-		COLORDEPTH : natural;						-- colordepth in Bit
-		PIXEL_ROW_ADDRESS_BITS : natural;		-- 4 address lines A-D for the pixel rows
-		NO_PIXEL_COLUMNS_PER_PANEL : natural	-- number of pixels in one row of one panel
+		NO_PANEL_ROWS : natural := 2;					-- number of panel rows
+		NO_PANEL_COLUMNS : natural := 4;				-- number of panel columns
+		COLORDEPTH : natural := 8;						-- colordepth in Bit
+		PIXEL_ROW_ADDRESS_BITS : natural := 4;		-- 4 address lines A-D for the pixel rows
+		NO_PIXEL_COLUMNS_PER_PANEL : natural := 32	-- number of pixels in one row of one panel
 	 );
 
     port (
@@ -48,9 +48,8 @@ end entity ctrl;
 architecture rtl of ctrl is
     signal s_cnt_row, s_cnt_row_nxt : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);				-- 5 bit wide (4 downto 0) -> can count from 0 to 31
     signal s_cnt_bit, s_cnt_bit_nxt : unsigned(COLORDEPTH downto 0);				-- 9 bit wide (8 downto 0) -> can count from 0 to 255
-    signal s_cnt_pan : unsigned(natural(ceil(log2(real(NO_PANEL_COLUMNS)))) downto 0);
-	 --signal s_cnt_pan, s_cnt_pan_nxt : unsigned(natural(ceil(log2(real(NO_PANEL_COLUMNS)))) downto 0);				-- 3 bit wide (2 downto 0) -> can count from 0 to 7
-	 signal s_cnt_pxl, s_cnt_pxl_nxt : unsigned(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) downto 0);				-- 6 bit wide (5 downto 0) -> can count from 0 to 63
+    signal s_cnt_pan, s_cnt_pan_nxt : unsigned(natural(ceil(log2(real(NO_PANEL_COLUMNS)))) downto 0);				-- 3 bit wide (2 downto 0) -> can count from 0 to 7
+    signal s_cnt_pxl, s_cnt_pxl_nxt : unsigned(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) downto 0);				-- 6 bit wide (5 downto 0) -> can count from 0 to 63
 
     signal s_sel : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);						-- 3 bit wide (2 downto 0) -> can count from 0 to 7
     signal s_row : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);							-- 4 bit wide (3 downto 0) -> can count from 0 to 15
@@ -70,9 +69,8 @@ begin
         if(s_reset_n_i = '0') then
             s_cnt_row <= (others => '0');			-- set row counter to zero in case of a reset (others => '0' sets all bits to zero)
         elsif(rising_edge(s_clk_i)) then
-            --if(s_cnt_bit_nxt(COLORDEPTH) = '1' and s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-				if(s_cnt_bit_nxt(COLORDEPTH) = '1' and (s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-					 s_cnt_row <= '0' & s_cnt_row_nxt(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
+            if(s_cnt_bit_nxt(COLORDEPTH) = '1' and s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
+                s_cnt_row <= '0' & s_cnt_row_nxt(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
             end if;
         end if;
     end process p_cnt_row;
@@ -85,14 +83,13 @@ begin
         if(s_reset_n_i = '0') then
             s_cnt_bit <= (others => '0');
         elsif(rising_edge(s_clk_i)) then
-            --if(s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-				if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-					 s_cnt_bit <= '0' & s_cnt_bit_nxt(COLORDEPTH-1 downto 0);
+            if(s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
+                s_cnt_bit <= '0' & s_cnt_bit_nxt(COLORDEPTH-1 downto 0);
             end if;
         end if;
     end process p_cnt_bit;
 
-    --s_cnt_pan_nxt <= s_cnt_pan + 1;
+    s_cnt_pan_nxt <= s_cnt_pan + 1;
 
     -- count up the panels
     p_cnt_pan : process(s_clk_i, s_reset_n_i)
@@ -101,12 +98,7 @@ begin
             s_cnt_pan <= (others => '0');
         elsif(rising_edge(s_clk_i)) then
             if(s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-						if(s_cnt_pan = NO_PANEL_COLUMNS-1) then
-							s_cnt_pan <= (others => '0');
-						else
-							s_cnt_pan <= s_cnt_pan + 1;
-						end if;
-					 --s_cnt_pan <= '0' & s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0);
+                s_cnt_pan <= '0' & s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0);
             end if;
         end if;
     end process p_cnt_pan;
@@ -123,9 +115,8 @@ begin
         end if;
     end process p_cnt_pxl;
 
-   s_addr_o <=  std_logic_vector(s_cnt_pan(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0)) &
-					 --std_logic_vector(to_unsigned(s_cnt_pan, natural(ceil(log2(real(NO_PANEL_COLUMNS)))))) &
-					 std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0)) &
+   s_addr_o <=  std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0)) &
+                std_logic_vector(s_cnt_pan(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0)) &
                 std_logic_vector(s_cnt_pxl(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0));
 
 
@@ -169,8 +160,7 @@ begin
                 s_oe <= (others => '1');
             end if;
 
-            --if((s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1') and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-				if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
+            if(s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
                 s_lat <= (others => '1');
                 s_row <= std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0));
             end if;

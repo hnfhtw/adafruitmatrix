@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 31.03.2016
+-- Last modified: 30.03.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -82,7 +82,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			ADDR_WIDTH => RAM_ADDR_WIDTH,
-			init_file => "newaddress_128x32_upper.mif"
+			init_file => "128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,
@@ -98,7 +98,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			ADDR_WIDTH => RAM_ADDR_WIDTH,
-			init_file => "newaddress_128x32_lower.mif"
+			init_file => "128x32_lower.mif"
 		)
 		port map (
 			rclk	=> s_clk,
