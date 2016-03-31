@@ -11,17 +11,17 @@ V02: Support for 3 or 5 panel columns enabled:
 					Old format of addresses(example for 128x16 -> upper half of a 128x32 image):
 					0 ....... 31 32 ....... 63 64 ....... 95 96 ....... 127
 					128 .... 159 160 ..... 191 192 ..... 223 224 ...... 255
-					.													  .
-					.	Panel 1		 Panel 2	   Panel 3		Panel 4	  .
-					.													  .
+					.                                                     .
+					.  Panel 1      Panel 2        Panel 3      Panel 4   .
+					.                                                     .
 					1920 .. 1951 1952 ... 1983 1984 ... 2015 2016 .... 2047
 					
 					New format of addresses(example for 128x16 -> upper half of a 128x32 image):
 					0 ....... 31 512 ..... 543 1024 ... 1055 1536 .... 1567
 					32 ...... 63 544 ..... 575 1056 ... 1087 1568 .... 1599	
-					.													  .
-					.	Panel 1		 Panel 2	   Panel 3		Panel 4	  .
-					.													  .
+					.                                                     .
+					.  Panel 1      Panel 2        Panel 3      Panel 4   .
+					.                                                     .
 					480 ..... 511 992 ... 1023 1504 ... 1535 2016 .... 2047
 
 
