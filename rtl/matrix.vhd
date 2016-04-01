@@ -1,4 +1,4 @@
--- ADAFRUITMATRIX -- FPGA design to drive combinations (1x1, 2x2, 4x4) of 32x32 RGB LED Matrices
+-- ADAFRUITMATRIX -- FPGA design to drive combinations of 32x32 RGB LED Matrices
 --
 -- Copyright (C) 2016  Harald Netzer (Initial Version by Christian Fibich)
 --
@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 31.03.2016
+-- Last modified: 01.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -42,7 +42,14 @@ entity matrix is
         s_lat_o     : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);						-- STB / LATCH output
         s_oe_o      : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);						-- OE output
         s_wobble_i  : in  std_logic;
-        s_clk_o     : out std_logic_vector(NO_PANEL_ROWS-1 downto 0));						-- CLK output
+        s_clk_o     : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);						-- CLK output
+		  
+		  -- input for RGB data decoder
+		  s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
+		  s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
+		  s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers
+		  s_wclk_i    : in std_logic);
+		  -- end input for RGB data decoder
 end matrix;
 
 architecture rtl of matrix is
@@ -72,6 +79,11 @@ architecture rtl of matrix is
     signal s_brightcnt, s_brightcnt_nxt : unsigned(27 downto 0);
     signal s_direction                  : std_logic;
 
+	 -- RGB data decoder
+	 signal s_waddr   : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
+	 signal s_we      : std_logic_vector(2*NO_PANEL_ROWS-1 downto 0);
+	 -- end RGB data decoder
+	 
 begin
 	
 	-- generate frame buffers for upper and lower half of panel row n
@@ -81,15 +93,15 @@ begin
 		testram_u_panelrowX : entity work.testram
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
-			ADDR_WIDTH => RAM_ADDR_WIDTH,
+			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
 			init_file => "newaddress_128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,
-			wclk	=> s_clk,
+			wclk	=> s_wclk_i,
 			raddr	=> s_addr,
 			waddr	=> s_addr,
-			data	=> s_ram_l((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n),
+			data	=> s_data_i,
 			we		=> '0',
 			q		=> s_ram_u((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n)
 		);
@@ -97,15 +109,15 @@ begin
 		testram_l_panelrowX : entity work.testram
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
-			ADDR_WIDTH => RAM_ADDR_WIDTH,
+			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
 			init_file => "newaddress_128x32_lower.mif"
 		)
 		port map (
 			rclk	=> s_clk,
-			wclk	=> s_clk,
+			wclk	=> s_wclk_i,
 			raddr	=> s_addr,
 			waddr	=> s_addr,
-			data	=> s_ram_u((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n),
+			data	=> s_data_i,
 			we		=> '0',
 			q		=> s_ram_l((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n)
 		);	

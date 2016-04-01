@@ -1,4 +1,4 @@
--- ADAFRUITMATRIX -- FPGA design to drive combinations (1x1, 2x2, 4x4) of 32x32 RGB LED Matrices
+-- ADAFRUITMATRIX -- FPGA design to drive combinations of 32x32 RGB LED Matrices
 --
 -- Copyright (C) 2016  Harald Netzer
 --
@@ -16,18 +16,19 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- RAM entity (simple dual-port RAM with two read/write addresses and clocks)
--- Last modified: 30.03.2016
+-- Last modified: 01.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
+use ieee.math_real.all;
 
 entity testram is
 
 	generic 
 	(
 		DATA_WIDTH : natural := 24;
-		ADDR_WIDTH : natural := 11;
+		DATA_RANGE : natural := 2048;
 		init_file : string
 	);
 
@@ -35,8 +36,8 @@ entity testram is
 	(
 		rclk	: in std_logic;
 		wclk	: in std_logic;
-		raddr	: in std_logic_vector((ADDR_WIDTH-1) downto 0);
-		waddr	: in std_logic_vector((ADDR_WIDTH-1) downto 0);
+		raddr	: in std_logic_vector((natural(ceil(log2(real(DATA_RANGE))))-1) downto 0);
+		waddr	: in std_logic_vector((natural(ceil(log2(real(DATA_RANGE))))-1) downto 0);
 		data	: in std_logic_vector((DATA_WIDTH-1) downto 0);
 		we		: in std_logic := '1';
 		q		: out std_logic_vector((DATA_WIDTH -1) downto 0)
@@ -48,7 +49,7 @@ architecture rtl of testram is
 
 	-- Build a 2-D array type for the RAM
 	subtype word_t is std_logic_vector((DATA_WIDTH-1) downto 0);
-	type memory_t is array(2**ADDR_WIDTH-1 downto 0) of word_t;
+	type memory_t is array(DATA_RANGE-1 downto 0) of word_t;
 	
 	-- Declare the RAM signal.	
 	signal ram : memory_t;

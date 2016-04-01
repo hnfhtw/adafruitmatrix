@@ -24,6 +24,11 @@ V02: Support for 3 or 5 panel columns enabled:
 					.                                                     .
 					480 ..... 511 992 ... 1023 1504 ... 1535 2016 .... 2047
 
+V03: Reservation of unused RAM avoided:
+	 testram.vhd:    Generic ADDR_WIDTH exchanged with DATA_RANGE -> memory_t array changed from 2^ADDR_WIDTH
+	                 to the actual needed value given by DATA_RANGE
+	 matrix.vhd:     Adaptions for the ADDR_WIDHT -> DATA_RANGE changed
+	                 First signal definitions for RGB data decoder which fills the framebuffers
 
 TODO:
 Tidy up rtl/ctrl.vhd

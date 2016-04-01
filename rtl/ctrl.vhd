@@ -1,4 +1,4 @@
--- ADAFRUITMATRIX -- FPGA design to drive combinations (1x1, 2x2, 4x4) of 32x32 RGB LED Matrices
+-- ADAFRUITMATRIX -- FPGA design to drive combinations of 32x32 RGB LED Matrices
 --
 -- Copyright (C) 2016  Harald Netzer (Initial Version by Christian Fibich)
 --
