@@ -47,7 +47,7 @@ entity matrix is
 		  -- input for RGB data decoder
 		  s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
 		  s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
-		  s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers
+		  s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
 		  s_wclk_i    : in std_logic);
 		  -- end input for RGB data decoder
 end matrix;
@@ -62,7 +62,8 @@ architecture rtl of matrix is
     constant C_BLUE_1       : natural := 5;
 	 
 	 constant RAM_ADDR_WIDTH	: natural := PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));
-
+	 constant WADDR_WIDTH      : natural := natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+1;
+	 
     signal s_addr           : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
    
 	 signal s_sel            : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);
@@ -85,6 +86,26 @@ architecture rtl of matrix is
 	 -- end RGB data decoder
 	 
 begin
+
+	-- RGB data decoder (sets s_we signal for correct framebuffer)
+	-- Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = panel row number, RRRR = pixel row number, XXXXX = pixel column number
+	--                         Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writting
+	s_waddr(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0)	<= s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
+	s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
+	s_waddr(RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))); -- assign address part RRRR (PP RRR RRRR XXXXX)
+		
+	p_decode : process(s_wclk_i, s_reset_n_i)
+   begin
+        if(s_reset_n_i = '0') then
+					s_we <= (others => '0');
+        elsif(rising_edge(s_wclk_i)) then
+		  		s_we <= (others => '0');
+            if(s_we_i = '1') then
+					s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))))))) <= '1';
+				end if;
+        end if;
+   end process p_decode;
+	-- end RGB data decoder
 	
 	-- generate frame buffers for upper and lower half of panel row n
 	half_panel_row_frame_buffers : for n in 0 to NO_PANEL_ROWS-1 generate
@@ -100,9 +121,9 @@ begin
 			rclk	=> s_clk,
 			wclk	=> s_wclk_i,
 			raddr	=> s_addr,
-			waddr	=> s_addr,
+			waddr	=> s_waddr,
 			data	=> s_data_i,
-			we		=> '0',
+			we		=> s_we(2*n),
 			q		=> s_ram_u((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n)
 		);
 		
@@ -116,9 +137,9 @@ begin
 			rclk	=> s_clk,
 			wclk	=> s_wclk_i,
 			raddr	=> s_addr,
-			waddr	=> s_addr,
+			waddr	=> s_waddr,
 			data	=> s_data_i,
-			we		=> '0',
+			we		=> s_we(2*n+1),
 			q		=> s_ram_l((n+1)*3*COLORDEPTH-1 downto 3*COLORDEPTH*n)
 		);	
 	

@@ -30,19 +30,27 @@ V03: Reservation of unused RAM avoided:
 	 matrix.vhd:     Adaptions for the ADDR_WIDHT -> DATA_RANGE changed
 	                 First signal definitions for RGB data decoder which fills the framebuffers
 
+V04: RGB data decoder implemented which sets the s_we signal for the correct framebuffer.
+	 matrix.vhd:     Decoder code implemented
+	 Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = panel row number, RRRR = pixel row number, XXXXX = pixel column number
+	                         Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
+	 -> the 24 Bit wide data input s_data_i, the write clock s_wclk_i and the relevant parts of s_waddr_i are directly connected to all framebuffers
+	 -> writing this data to the correct framebuffer is ensued by the decoder which evaluates the TTT part of the input address s_waddr_i
+	 Testbench updated to test the decoder in modelsim (matrix_tb.vhd, compile.do and sim.do updated)
+	
 TODO:
 Tidy up rtl/ctrl.vhd
     -> 1 counter module, 4 instantiations
 	-> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
 Check 1 Pixel shift (currently the pixels are shifted by 1 too far -> clock  topic or code issue?)
-Add output regs to RAM blocks to improve timing
 Implement some "image download mechanism"
 
 
-NOTES:
-Files in testbench (tb) and simulation (sim) folders not up to date.
+
 
 
 LAST MODIFIED:
 V01: 30.03.2016
 V02: 31.03.2016
+V03: 01.04.2016
+V04: 01.04.2016
