@@ -1,30 +1,13 @@
 vsim -voptargs=+acc work.matrix_tb(sim) -t ps
+mem load -infile newaddress_128x32_upper.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(0)/testram_u_panelrowX
+mem load -infile newaddress_128x32_lower.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(0)/testram_l_panelrowX
+mem load -infile newaddress_128x32_upper.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(1)/testram_u_panelrowX
+mem load -infile newaddress_128x32_lower.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(1)/testram_l_panelrowX
+mem load -infile newaddress_128x32_upper.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(2)/testram_u_panelrowX
+mem load -infile newaddress_128x32_lower.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(2)/testram_l_panelrowX
+mem load -infile newaddress_128x32_upper.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(3)/testram_u_panelrowX
+mem load -infile newaddress_128x32_lower.hex -format hex /matrix_tb/DUT/half_panel_row_frame_buffers(3)/testram_l_panelrowX
 
-add wave -position insertpoint  \
-sim:/matrix_tb/DUT/s_clk_i \
-sim:/matrix_tb/DUT/s_reset_n_i \
-sim:/matrix_tb/DUT/s_data_o \
-sim:/matrix_tb/DUT/s_row_o \
-sim:/matrix_tb/DUT/s_lat_o \
-sim:/matrix_tb/DUT/s_oe_o \
-sim:/matrix_tb/DUT/s_clk_o \
-sim:/matrix_tb/DUT/s_addr \
-sim:/matrix_tb/DUT/s_sel \
-sim:/matrix_tb/DUT/s_ram_u \
-sim:/matrix_tb/DUT/s_ram_l \
-sim:/matrix_tb/DUT/s_row \
-sim:/matrix_tb/DUT/s_reset_n \
-sim:/matrix_tb/DUT/s_clk \
-sim:/matrix_tb/DUT/s_locked \
-sim:/matrix_tb/DUT/s_reset \
-sim:/matrix_tb/DUT/C_RED_OFFSET \
-sim:/matrix_tb/DUT/C_GREEN_OFFSET \
-sim:/matrix_tb/DUT/C_BLUE_OFFSET \
-sim:/matrix_tb/DUT/C_RED_0 \
-sim:/matrix_tb/DUT/C_GREEN_0 \
-sim:/matrix_tb/DUT/C_BLUE_0 \
-sim:/matrix_tb/DUT/C_RED_1 \
-sim:/matrix_tb/DUT/C_GREEN_1 \
-sim:/matrix_tb/DUT/C_BLUE_1
+do wave.do
 
-run 33.3ms
+run 100us

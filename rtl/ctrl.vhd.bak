@@ -142,22 +142,23 @@ begin
 
 
 
-    s_oe_o  <= s_oe;
-	 s_lat_o  <= s_lat;
+    --s_oe_o  <= s_oe;
     s_sel_o <= s_sel;
 
     -- generate the LATCH and ABCD control lines
     p_ctrl : process(s_clk_i, s_reset_n_i)
     begin
         if(s_reset_n_i = '0') then
-            --s_lat_o <= (others => '0');
+            s_lat_o <= (others => '0');
             s_row_o <= (others => '0');
             s_lat   <= (others => '0');
             s_oe    <= (others => '1');
+			s_oe_o  <= (others => '1');
             s_row   <= (others => '0');
         elsif(rising_edge(s_clk_i)) then
-            --s_lat_o <= s_lat;
+            s_lat_o <= s_lat;
             s_row_o <= s_row;
+			s_oe_o  <= s_oe;
 
             s_lat <= (others => '0');
             s_oe  <= (others => '0');

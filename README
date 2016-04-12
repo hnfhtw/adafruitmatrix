@@ -37,12 +37,15 @@ V04: RGB data decoder implemented which sets the s_we signal for the correct fra
 	 -> the 24 Bit wide data input s_data_i, the write clock s_wclk_i and the relevant parts of s_waddr_i are directly connected to all framebuffers
 	 -> writing this data to the correct framebuffer is ensued by the decoder which evaluates the TTT part of the input address s_waddr_i
 	 Testbench updated to test the decoder in modelsim (matrix_tb.vhd, compile.do and sim.do updated)
-	
+
+V05: Testbench updated to test LED panel driver
+	 1 Pixel shift fixed - LATCH signal needed to come 1 clk period earlier
+	 Pin Assignments changed to support 4 Panel Rows
+	 
 TODO:
 Tidy up rtl/ctrl.vhd
     -> 1 counter module, 4 instantiations
 	-> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
-Check 1 Pixel shift (currently the pixels are shifted by 1 too far -> clock  topic or code issue?)
 Implement some "image download mechanism"
 
 
@@ -54,3 +57,4 @@ V01: 30.03.2016
 V02: 31.03.2016
 V03: 01.04.2016
 V04: 01.04.2016
+V05: 12.04.2016
