@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Testbench
--- Last modified: 01.04.2016
+-- Last modified: 15.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -41,6 +41,9 @@ end entity matrix_tb;
 -------------------------------------------------------------------------------
 
 architecture sim of matrix_tb is
+
+	constant MAIN_CLK_PER	:	time := 25 ns;		-- 40 MHz
+	constant BAUD_RATE		: 	natural := 115200;
 	
 	component matrix
 	port(
@@ -54,10 +57,12 @@ architecture sim of matrix_tb is
         s_clk_o     : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);						-- CLK output
 		  
 		  -- input for RGB data decoder
-		  s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
-		  s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
-		  s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
-		  s_wclk_i    : in std_logic);
+		  --s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
+		  --s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
+		  --s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
+		  --s_wclk_i    : in std_logic);
+		  
+		s_uart_rx	: in std_logic);
 	end component;
 
 
@@ -77,6 +82,9 @@ architecture sim of matrix_tb is
 	signal s_wclk_i    : std_logic := '1';
     -- clock
     signal Clk : std_logic := '1';
+	
+	signal s_uart_rx	: std_logic := '1';
+	signal uart_clk	: std_logic := '1';
 
 begin  -- architecture sim
 
@@ -99,10 +107,7 @@ begin  -- architecture sim
             s_oe_o      => s_oe_o,
             s_wobble_i  => s_wobble_i,
 			s_clk_o     => s_clk_o,
-			s_data_i    => s_data_i,
-			s_we_i      => s_we_i,
-			s_waddr_i   => s_waddr_i,
-			s_wclk_i    => s_wclk_i			
+			s_uart_rx    => s_uart_rx
 			);
 
     -- clock generation
@@ -111,32 +116,193 @@ begin  -- architecture sim
     s_wobble_i  <= '1';
 	s_wclk_i    <= not s_wclk_i after 50ns;
 	
-	-- PP TTT RRRR XXXXX
-	p_decode_test : process
+	
+	-- UART Clock generation
+	uart_clock_generation : process
 	begin
-	    wait until falling_edge(s_wclk_i);
-		s_we_i <= '1';
-		s_waddr_i <= "01001000100011";
-		s_data_i <= "111111110000000011111111";
-		wait until falling_edge(s_wclk_i);
-		s_we_i <= '0';
-		wait until falling_edge(s_wclk_i);
-		s_we_i <= '1';
-		s_waddr_i <= "11101000101111";
-		s_data_i <= "000000001111111100000000";
-		wait until falling_edge(s_wclk_i);
-		s_we_i <= '0';
-		wait until falling_edge(s_wclk_i);
-		s_we_i <= '1';
-		s_waddr_i <= "11010111110000";
-		s_data_i <= "000000000000000011111111";
-		wait until falling_edge(s_wclk_i);
-		s_we_i <= '0';
-		wait until falling_edge(s_wclk_i);
-		s_waddr_i <= "01001000100011";
-		s_data_i <= "111111110000000011111111";
+		--wait for (MAIN_CLK_PER*5208)/2;			-- HN 5208 = 1 / (BAUD_RATE * MAIN_CLK_PER) -> "wait for 1/(2*BAUD_RATE)" would also fit
+		wait for (MAIN_CLK_PER*347)/2;
+		uart_clk	<= not uart_clk;
+	end process;
+		
+	uart_rx_generation : process
+	begin
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		
+		-- Byte 1 -> decimal 1 (0000 0001)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		
+		-- Byte 2 -> decimal 2 (0000 0010)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '1';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		-- Byte 3 -> decimal 255 (1111 1111)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '1';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '1';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		-- Byte 4 -> decimal 0 (0000 0000)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		-- Byte 5 -> decimal 85 (0101 0101)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '1';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+		wait until falling_edge(uart_clk);
+		wait until falling_edge(uart_clk);
+		
+		-- Byte 6 -> decimal (10101001)
+		s_uart_rx <= '0';					-- start bit
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 0
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 1 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 2 
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 3 
+		wait until falling_edge(uart_clk);		
+		s_uart_rx <= '0';					-- Bit 4
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 5
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '0';					-- Bit 6
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- Bit 7
+		wait until falling_edge(uart_clk);
+		s_uart_rx <= '1';					-- stop bit
+		
+	end process;
+	
+	-- PP TTT RRRR XXXXX
+	-- p_decode_test : process
+	-- begin
+	    -- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '1';
+		-- s_waddr_i <= "01001000100011";
+		-- s_data_i <= "111111110000000011111111";
+		-- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '0';
+		-- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '1';
+		-- s_waddr_i <= "11101000101111";
+		-- s_data_i <= "000000001111111100000000";
+		-- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '0';
+		-- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '1';
+		-- s_waddr_i <= "11010111110000";
+		-- s_data_i <= "000000000000000011111111";
+		-- wait until falling_edge(s_wclk_i);
+		-- s_we_i <= '0';
+		-- wait until falling_edge(s_wclk_i);
+		-- s_waddr_i <= "01001000100011";
+		-- s_data_i <= "111111110000000011111111";
 
-	end process p_decode_test;
+	-- end process p_decode_test;
 	
 end architecture sim;
 

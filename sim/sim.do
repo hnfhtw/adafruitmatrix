@@ -10,4 +10,4 @@ mem load -infile newaddress_128x32_lower.hex -format hex /matrix_tb/DUT/half_pan
 
 do wave.do
 
-run 100us
+run 2ms

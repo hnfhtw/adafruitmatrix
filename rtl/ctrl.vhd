@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 31.03.2016
+-- Last modified: 15.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -166,9 +166,10 @@ begin
             -- with increasing value of brightscale
             -- FIXME: reduces color depth, would be better to change overall duty cycle
             -- or remove entirely -- it is not really necessary
-            if (s_cnt_pxl >= ((2**natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) - 1) - unsigned(s_brightscale))) then			-- ** means ^ (exponentiation operator) -> s_cnt_pxl >= 2^5 - 1 - s_brightscale
-                s_oe <= (others => '1');
-            end if;
+            --if (s_cnt_pxl >= ((2**natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) - 1) - unsigned(s_brightscale))) then			-- ** means ^ (exponentiation operator) -> s_cnt_pxl >= 2^5 - 1 - s_brightscale
+            if (s_cnt_pxl >= NO_PIXEL_COLUMNS_PER_PANEL) then
+					s_oe <= (others => '1');
+				end if;
 
             --if((s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1') and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
 			if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then

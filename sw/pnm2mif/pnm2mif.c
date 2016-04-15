@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 0)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][2], array[offset+i][1], array[offset+i][0]);
+			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
 			addrprint++;
 		}
 	}
@@ -96,7 +96,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 1)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][2], array[offset+i][1], array[offset+i][0]);
+			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
 			addrprint++;
 		}
 	}
@@ -104,7 +104,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 2)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][2], array[offset+i][1], array[offset+i][0]);
+			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
 			addrprint++;
 		}
 	}
@@ -112,7 +112,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 3)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][2], array[offset+i][1], array[offset+i][0]);
+			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
 			addrprint++;
 		}
 	}

@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 01.04.2016
+-- Last modified: 15.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -27,7 +27,7 @@ entity matrix is
 	 
 	 generic 
 	 (
-		NO_PANEL_ROWS : natural := 2;					-- number of panel rows
+		NO_PANEL_ROWS : natural := 3;					-- number of panel rows
 		NO_PANEL_COLUMNS : natural := 4;				-- number of panel columns
 		COLORDEPTH : natural := 8;						-- colordepth in Bit
 		PIXEL_ROW_ADDRESS_BITS : natural := 4;		-- 4 address lines A-D for the pixel rows
@@ -45,11 +45,14 @@ entity matrix is
         s_clk_o     : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);						-- CLK output
 		  
 		  -- input for RGB data decoder
-		  s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
-		  s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
-		  s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
-		  s_wclk_i    : in std_logic);
+		 -- s_data_i    : in std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
+		  --s_we_i      : in std_logic;													-- write enable input to decoder for framebuffers
+		  --s_waddr_i   : in std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
+		  --s_wclk_i    : in std_logic;
 		  -- end input for RGB data decoder
+		  
+		  -- input for UART receiver
+			s_uart_rx_i	  : in std_logic);		  
 end matrix;
 
 architecture rtl of matrix is
@@ -66,13 +69,13 @@ architecture rtl of matrix is
 	 
     signal s_addr           : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
    
-	 signal s_sel            : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);
-	 signal s_ram_u, s_ram_l : std_logic_vector(NO_PANEL_ROWS*3*COLORDEPTH-1 downto 0);	-- frame buffers for upper and lower half of panel row n
+	signal s_sel            : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);
+	signal s_ram_u, s_ram_l : std_logic_vector(NO_PANEL_ROWS*3*COLORDEPTH-1 downto 0);	-- frame buffers for upper and lower half of panel row n
     signal s_row            : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
 
     signal s_reset_n : std_logic;
     signal s_clk     : std_logic;
-	 signal s_clk1		: std_logic;
+	signal s_clk1		: std_logic;
     signal s_locked  : std_logic_vector(1 downto 0);
     signal s_reset   : std_logic;
 
@@ -80,29 +83,112 @@ architecture rtl of matrix is
     signal s_brightcnt, s_brightcnt_nxt : unsigned(27 downto 0);
     signal s_direction                  : std_logic;
 
-	 -- RGB data decoder
-	 signal s_waddr   : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
-	 signal s_we      : std_logic_vector(2*NO_PANEL_ROWS-1 downto 0);
-	 -- end RGB data decoder
+	-- RGB data decoder
+	signal s_waddr   : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
+	signal s_we      : std_logic_vector(2*NO_PANEL_ROWS-1 downto 0);
+	-- end RGB data decoder
 	 
+	-- UART receiver
+	signal s_uart_rx : std_logic;
+	signal s_uart_rx_busy : std_logic;
+	signal s_uart_rx_data	: std_logic_vector(7 downto 0);
+	signal s_uart_rx_packet : std_logic_vector(47 downto 0) := (others => '0'); 	-- 6 Byte input buffer for RGB packets
+	signal s_uart_rx_count		: unsigned(2 downto 0);					-- to count received bytes
+	signal s_uart_rx_RGB		: std_logic_vector(3*COLORDEPTH-1 downto 0);
+	 
+	signal s_data_i    : std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
+	signal s_we_i      : std_logic;													-- write enable input to decoder for framebuffers
+	signal s_waddr_i   : std_logic_vector((natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
+	signal s_wclk_i    : std_logic; 
+	signal s_data_taken	: std_logic := '0';
+	signal s_uart_cs	: std_logic_vector(7 downto 0);
+	
+	--end UART receiver
 begin
+
+	-- instantiate the uart entity	  
+	 rs232 : entity work.rs232
+		   generic map (
+				 Quarz_Taktfrequenz => 30000000,
+				 Baudrate => 115200
+		   )
+         port map (
+				 RXD			=> s_uart_rx,			-- RS232 received serial data
+				 RX_Data		=> s_uart_rx_data,		-- Received data 
+				 RX_Busy		=> s_uart_rx_busy,		-- Received data ready to uPC read
+				 CLK			=> s_clk				-- Main clock
+		   );	  
+			  
+	p_uart_rx : process(s_wclk_i, s_reset_n)
+	begin
+	  if(s_reset_n = '0') then
+			s_we_i <= '0';
+			s_uart_rx_count <= (others => '0');
+      elsif(rising_edge(s_wclk_i)) then
+		
+			s_uart_rx <= s_uart_rx_i;
+			
+			s_uart_rx_RGB <= (others => '0');
+			s_waddr_i <= (others => '0');
+			s_we_i <= '0';
+			
+			 if(s_uart_rx_busy = '1') then
+				 s_data_taken <= '0';
+			 end if;			
+		
+			if(s_uart_rx_busy = '0' and s_uart_rx_count < 6 and s_data_taken = '0') then
+				s_uart_rx_packet(47-(8*to_integer(s_uart_rx_count)) downto 40-(8*to_integer(s_uart_rx_count))) <= s_uart_rx_data;
+				s_data_taken <= '1';
+				s_uart_cs <= (s_uart_rx_packet(47 downto 40) xor s_uart_rx_packet(39 downto 32) xor s_uart_rx_packet(31 downto 24) xor s_uart_rx_packet(23 downto 16) xor s_uart_rx_packet(15 downto 8));
+				s_uart_rx_count <= s_uart_rx_count + 1;
+			elsif(s_uart_rx_count = 6) then			
+				if(s_uart_rx_packet(7 downto 0) = s_uart_cs) then
+					s_uart_rx_RGB <= s_uart_rx_packet(31 downto 8);
+					s_waddr_i(4 downto 0) <= s_uart_rx_packet(44 downto 40);	-- X coordinate -> Bit 0 to 4
+					s_waddr_i(13 downto 12) <= s_uart_rx_packet(46 downto 45);	-- X coordinate -> Bit 5 and 6
+					s_waddr_i(8 downto 5) <= s_uart_rx_packet(35 downto 32); 	-- Y coordinate -> Bit 0 to 3
+					s_waddr_i(11 downto 9) <= s_uart_rx_packet(38 downto 36);	-- Y coordinate -> Bit 4 to 6
+					s_we_i <= '1';
+					s_uart_rx_count <= (others => '0');	
+					s_uart_rx_packet <= (others => '0');
+				else
+					s_uart_rx_packet(47 downto 40) <= s_uart_rx_packet(39 downto 32);
+					s_uart_rx_packet(39 downto 32) <= s_uart_rx_packet(31 downto 24);
+					s_uart_rx_packet(31 downto 24) <= s_uart_rx_packet(23 downto 16);
+					s_uart_rx_packet(23 downto 16) <= s_uart_rx_packet(15 downto 8);
+					s_uart_rx_packet(15 downto 8) <= s_uart_rx_packet(7 downto 0);
+					s_uart_rx_count <= s_uart_rx_count - 1;
+				end if;
+			end if;
+      end if;
+	end process p_uart_rx;	
+	
+	s_wclk_i <= s_clk;
+		  
 
 	-- RGB data decoder (sets s_we signal for correct framebuffer)
 	-- Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = panel row number, RRRR = pixel row number, XXXXX = pixel column number
 	--                         Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writting
-	s_waddr(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0)	<= s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
-	s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
-	s_waddr(RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))); -- assign address part RRRR (PP RRR RRRR XXXXX)
+	--s_waddr(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0)	<= s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
+	--s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
+	--s_waddr(RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))); -- assign address part RRRR (PP RRR RRRR XXXXX)
 		
-	p_decode : process(s_wclk_i, s_reset_n_i)
+	p_decode : process(s_wclk_i, s_reset_n)
    begin
-        if(s_reset_n_i = '0') then
-					s_we <= (others => '0');
+        if(s_reset_n = '0') then
+			s_we <= (others => '0');
+			s_data_i <= (others => '0');
         elsif(rising_edge(s_wclk_i)) then
-		  		s_we <= (others => '0');
-            if(s_we_i = '1') then
+			s_we <= (others => '0');
+			s_data_i <= (others => '0');
+			
+			if(s_we_i = '1') then
+					s_waddr(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0)	<= s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
+					s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
+					s_waddr(RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))); -- assign address part RRRR (PP RRR RRRR XXXXX)
 					s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))))))) <= '1';
-				end if;
+					s_data_i <= s_uart_rx_RGB;
+			end if;
         end if;
    end process p_decode;
 	-- end RGB data decoder
@@ -115,7 +201,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "newaddress_128x32_upper.mif"
+			init_file => "red_128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,
@@ -131,7 +217,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "newaddress_128x32_lower.mif"
+			init_file => "red_128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,
@@ -233,12 +319,21 @@ begin
 	 
 		 p_RGB01_output_panelrowX : process(s_ram_u, s_ram_l, s_sel)
 		 begin
-			  s_data_o(n*(C_BLUE_1+1) + C_RED_0)   <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
-			  s_data_o(n*(C_BLUE_1+1) + C_GREEN_0) <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
-			  s_data_o(n*(C_BLUE_1+1) + C_BLUE_0)  <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
-			  s_data_o(n*(C_BLUE_1+1) + C_RED_1)   <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
-			  s_data_o(n*(C_BLUE_1+1) + C_GREEN_1) <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
-			  s_data_o(n*(C_BLUE_1+1) + C_BLUE_1)  <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
+			 -- order if framebuffer data is aranged as: BGR (Bit 7 to Bit 0 = R)
+			 -- s_data_o(n*(C_BLUE_1+1) + C_RED_0)   <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
+			 -- s_data_o(n*(C_BLUE_1+1) + C_GREEN_0) <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
+			 -- s_data_o(n*(C_BLUE_1+1) + C_BLUE_0)  <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
+			 -- s_data_o(n*(C_BLUE_1+1) + C_RED_1)   <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
+			 -- s_data_o(n*(C_BLUE_1+1) + C_GREEN_1) <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
+			 -- s_data_o(n*(C_BLUE_1+1) + C_BLUE_1)  <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
+			
+			 -- order if framebuffer data is arranged as: RGB (Bit 7 to Bit 0 = B)
+		    s_data_o(n*(C_BLUE_1+1) + C_RED_0)   <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
+			 s_data_o(n*(C_BLUE_1+1) + C_GREEN_0) <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
+			 s_data_o(n*(C_BLUE_1+1) + C_BLUE_0)  <= s_ram_u(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
+			 s_data_o(n*(C_BLUE_1+1) + C_RED_1)   <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH*2);
+			 s_data_o(n*(C_BLUE_1+1) + C_GREEN_1) <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n+COLORDEPTH);
+			 s_data_o(n*(C_BLUE_1+1) + C_BLUE_1)  <= s_ram_l(to_integer(unsigned(s_sel))+COLORDEPTH*3*n);
 		 end process p_RGB01_output_panelrowX;
 	 
 	 end generate RGB01_output_signals;

@@ -26,9 +26,23 @@ add wave -noupdate -radix unsigned /matrix_tb/DUT/ctrl/s_sel
 add wave -noupdate /matrix_tb/DUT/ctrl/s_lat(0)
 add wave -noupdate /matrix_tb/DUT/ctrl/s_oe(0)
 add wave -noupdate -radix unsigned /matrix_tb/DUT/ctrl/s_row
+add wave -noupdate /matrix_tb/uart_clk
+add wave -noupdate /matrix_tb/DUT/s_we
+add wave -noupdate /matrix_tb/DUT/s_uart_rx_ready
+add wave -noupdate /matrix_tb/DUT/s_uart_rx_data
+add wave -noupdate /matrix_tb/DUT/s_uart_rx_packet
+add wave -noupdate -radix unsigned /matrix_tb/DUT/s_rx_count
+add wave -noupdate /matrix_tb/DUT/s_data_i
+add wave -noupdate /matrix_tb/DUT/s_we_i
+add wave -noupdate /matrix_tb/DUT/s_waddr_i
+add wave -noupdate /matrix_tb/DUT/s_waddr
+add wave -noupdate /matrix_tb/DUT/s_wclk_i
+add wave -noupdate /matrix_tb/DUT/s_data_taken
+add wave -noupdate /matrix_tb/DUT/half_panel_row_frame_buffers(0)/testram_u_panelrowX/ram
+add wave -noupdate /matrix_tb/DUT/s_uart_rx
 TreeUpdate [SetDefaultTree]
-WaveRestoreCursors {{Cursor 4} {262500 ps} 0} {{Cursor 5} {275000 ps} 0}
-quietly wave cursor active 2
+WaveRestoreCursors {{Cursor 4} {94919684 ps} 0} {{Cursor 5} {1353475000 ps} 0}
+quietly wave cursor active 1
 configure wave -namecolwidth 245
 configure wave -valuecolwidth 139
 configure wave -justifyvalue left
@@ -43,4 +57,4 @@ configure wave -griddelta 40
 configure wave -timeline 0
 configure wave -timelineunits ns
 update
-WaveRestoreZoom {852812 ps} {1354468 ps}
+WaveRestoreZoom {12403611 ps} {343757218 ps}

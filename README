@@ -41,15 +41,18 @@ V04: RGB data decoder implemented which sets the s_we signal for the correct fra
 V05: Testbench updated to test LED panel driver
 	 1 Pixel shift fixed - LATCH signal needed to come 1 clk period earlier
 	 Pin Assignments changed to support 4 Panel Rows
+
+V06: UART receiver added, clock changed from 40MHz to 30MHz to decrease distortions, gamma correction temporarily deactivated, bug fixed: R and B were mixed in earlier versions -> old ppm2mif and pnm2mif 
+	 scripts generated framebuffer data in format GBR (instead of RGB) -> pnm2mif script adapted to get correct output (RGB -> Bit 7 to Bit 0 is blue), additionally in matrix.vhd the process RGB01_output_signals
+	 adapted to get the correct signals to the RGB0/1 outputs.
+	 matrix.vhd: 	UART receiver added, BGR -> RGB bug fixed
+	 ctrl.vhd:		Gamma correction deactivated
+	 -> Drawing and data streaming is now possible with the 6 Byte RGB protocol consisting of: X Y R G B CS (X = X coordinate of pixel, Y = Y coordinate, R, G, B, and checksum CS which is XOR of all 5 prior Bytes)
 	 
 TODO:
 Tidy up rtl/ctrl.vhd
     -> 1 counter module, 4 instantiations
 	-> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
-Implement some "image download mechanism"
-
-
-
 
 
 LAST MODIFIED:
@@ -58,3 +61,4 @@ V02: 31.03.2016
 V03: 01.04.2016
 V04: 01.04.2016
 V05: 12.04.2016
+V06: 15.04.2016

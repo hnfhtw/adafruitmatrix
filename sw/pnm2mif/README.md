@@ -42,3 +42,6 @@ The colors are packed the following way:
 	Example for a 128x32 upper halfimage (128x16): $ ./pnm2mif 128 32 0 < testimage_128x32.pnm > testimage_128x32_upper.mif
 	Example for a 128x32 lower halfimage (128x16): $ ./pnm2mif 128 32 1 < testimage_128x32.pnm > testimage_128x32_lower.mif
    
+### Changelog ###
+    
+	15.04.2016 -> RAM data format in MIF file changed from GBR to RGB (bug fixed) -> now the correct output in format R (Bit 23 to 16), G (Bit 15 to 8), B (Bit 7 to 0) is generated
