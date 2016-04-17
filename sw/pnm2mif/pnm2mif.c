@@ -1,10 +1,16 @@
 // HN 31.03.2016 - Convert *.PNM image (width x 32) to two Quartus MIF files (memory addressing PP RRRR XXXXX, PP = Panel Number, RRRR = Pixel Row Address A-D, XXXXX = Pixel Column Number (0 to 31))
-// Usage: ./pnm2mif [width] [height] [0 or 1 (for upper or lower halfimage)] < inputfilename.pnm > outputfilename.mif
-// Example for a 128x32 upper halfimage: ./pnm2mif 128 32 0 < testimage_128x32.pnm > testimage_128x32_upper.mif
-// Example for a 128x32 lower halfimage: ./pnm2mif 128 32 1 < testimage_128x32.pnm > testimage_128x32_lower.mif
+// Usage: ./pnm2mif [width] [height] [0 or 1 (for upper or lower halfimage)] optional: [output color depth per color] < inputfilename.pnm > outputfilename.mif
+// Example for a 128x32 upper halfimage and 8 Bit color depth: ./pnm2mif 128 32 0 < testimage_128x32.pnm > testimage_128x32_upper.mif
+// Example for a 128x32 lower halfimage and 8 Bit color depth: ./pnm2mif 128 32 1 < testimage_128x32.pnm > testimage_128x32_lower.mif
+// Example for a 128x32 upper halfimage and 6 Bit color depth: ./pnm2mif 128 32 0 6 < testimage_128x32.pnm > testimage_128x32_upper_6Bit.mif
+// Example for a 128x32 lower halfimage and 6 Bit color depth: ./pnm2mif 128 32 1 6 < testimage_128x32.pnm > testimage_128x32_lower_6Bit.mif
+
+// Changelog: 15.04.2016 -> output data format changed from GBR to RGB
+//            17.04.2016 -> Optional parameter to reduce color depth introduced - input color depth is always 8 Bit per color, output color depth can be adjusted by command line parameter (8 Bit per color is default)
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #define MIF_HEADER "ADDRESS_RADIX=HEX;\nDATA_RADIX=HEX;\n\nCONTENT BEGIN\n"
 #define MIF_FOOTER "END;\n"
@@ -21,15 +27,19 @@ int main(int argc, char *argv[])
 	int width, height;
 	int headerdone = 0;
 	int offset = 0;
+	int colordepth = 8;
 	
 	if (argc < 4) {
-        fprintf(stderr,"Usage: %s [image width] [image height] [0 or 1 (upper half or lower halfimage)] < inputfilename.pnm > outputfilename.mif\n",argv[0]);
+        fprintf(stderr,"Usage: %s [image width] [image height] [0 or 1 (upper half or lower halfimage)] optional: [output color depth per color] < inputfilename.pnm > outputfilename.mif\n",argv[0]);
         return EXIT_FAILURE;
     }
 	
 	width = atoi(argv[1]);
 	height = atoi(argv[2]);
 	divide = atoi(argv[3]);
+	
+	if(argc > 4 && isdigit(atoi(argv[4])))
+		colordepth = atoi(argv[4]);
 	
 	
 	int array[width*height][3];
@@ -75,7 +85,7 @@ int main(int argc, char *argv[])
 		
 	}
 	
-	printf("WIDTH=24;\nDEPTH=%d;\n\n", width*height/2);
+	printf("WIDTH=%d;\nDEPTH=%d;\n\n", colordepth*3, width*height/2);
 	
 	puts(MIF_HEADER);
 	
@@ -88,7 +98,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 0)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
+			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -96,7 +106,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 1)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
+			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -104,7 +114,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 2)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
+			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -112,7 +122,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 3)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, array[offset+i][0], array[offset+i][1], array[offset+i][2]);
+			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
