@@ -7,10 +7,12 @@
 
 // Changelog: 15.04.2016 -> output data format changed from GBR to RGB
 //            17.04.2016 -> Optional parameter to reduce color depth introduced - input color depth is always 8 Bit per color, output color depth can be adjusted by command line parameter (8 Bit per color is default)
+//            18.04.2016 -> Bugs fixed (command line parameter setting of color depth didn't work properly, parameters 0 and 1 for upper/lower framebuffer were switched)
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
+#include <ctype.h>
 
 #define MIF_HEADER "ADDRESS_RADIX=HEX;\nDATA_RADIX=HEX;\n\nCONTENT BEGIN\n"
 #define MIF_FOOTER "END;\n"
@@ -28,6 +30,7 @@ int main(int argc, char *argv[])
 	int headerdone = 0;
 	int offset = 0;
 	int colordepth = 8;
+	int temp = 0;
 	
 	if (argc < 4) {
         fprintf(stderr,"Usage: %s [image width] [image height] [0 or 1 (upper half or lower halfimage)] optional: [output color depth per color] < inputfilename.pnm > outputfilename.mif\n",argv[0]);
@@ -38,10 +41,9 @@ int main(int argc, char *argv[])
 	height = atoi(argv[2]);
 	divide = atoi(argv[3]);
 	
-	if(argc > 4 && isdigit(atoi(argv[4])))
+	if(argc > 4 && (atoi(argv[4]) != 0))
 		colordepth = atoi(argv[4]);
-	
-	
+		
 	int array[width*height][3];
 	
 	for(x = 0; x<(width*height); x++)
@@ -89,7 +91,7 @@ int main(int argc, char *argv[])
 	
 	puts(MIF_HEADER);
 	
-	if(divide == 1)
+	if(divide == 0)
 		offset = 0;
 	else
 		offset = width*height/2;

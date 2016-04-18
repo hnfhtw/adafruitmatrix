@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 18.04.2016
+-- Last modified: 15.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -94,7 +94,7 @@ architecture rtl of matrix is
 	signal s_uart_rx_data	: std_logic_vector(7 downto 0);
 	signal s_uart_rx_packet : std_logic_vector(47 downto 0) := (others => '0'); 	-- 6 Byte input buffer for RGB packets
 	signal s_uart_rx_count		: unsigned(2 downto 0);					-- to count received bytes
-	signal s_uart_rx_RGB		: std_logic_vector(3*8-1 downto 0);
+	signal s_uart_rx_RGB		: std_logic_vector(3*COLORDEPTH-1 downto 0);
 	 
 	signal s_data_i    : std_logic_vector(3*COLORDEPTH-1 downto 0);		-- RGB data input to decoder for framebuffers
 	signal s_we_i      : std_logic;													-- write enable input to decoder for framebuffers
@@ -187,9 +187,7 @@ begin
 					s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
 					s_waddr(RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))); -- assign address part RRRR (PP RRR RRRR XXXXX)
 					s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))))))) <= '1';
-					s_data_i(3*COLORDEPTH-1 downto 2*COLORDEPTH) <= s_uart_rx_RGB(COLORDEPTH-1+16 downto 16); 	-- R
-					s_data_i(2*COLORDEPTH-1 downto COLORDEPTH) <= s_uart_rx_RGB(COLORDEPTH-1+8 downto 8); 			-- G
-					s_data_i(COLORDEPTH-1 downto 0) <= s_uart_rx_RGB(COLORDEPTH-1 downto 0); 							-- B
+					s_data_i <= s_uart_rx_RGB;
 			end if;
         end if;
    end process p_decode;
@@ -203,7 +201,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "..\img\mif_files\128x32_black.mif"
+			init_file => "red_128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,
@@ -219,7 +217,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "..\img\mif_files\128x32_black.mif"
+			init_file => "red_128x32_upper.mif"
 		)
 		port map (
 			rclk	=> s_clk,

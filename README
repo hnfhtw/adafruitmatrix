@@ -50,6 +50,11 @@ V06: UART receiver added, clock changed from 40MHz to 30MHz to decrease distorti
      -> Drawing and data streaming is now possible with the 6 Byte RGB protocol consisting of: X Y R G B CS (X = X coordinate of pixel, Y = Y coordinate, R, G, B, and checksum CS which is XOR of all 5 prior Bytes)
      
 V06a: pnm2mif script updated to generate MIF files with reduced color depths
+
+V07: Support of lower color depths than 8 Bit per color enabled -> UART input is always 8 Bit per color (R G B) but if the color depth is set to e.g. 6 Bit the upper 2 Bits are not considered - therefore the 
+     color depth reduction has to be done on the sender side (Android program RGBStreamer was also adapted to send RGB data already scaled to the desired color depth, see https://github.com/hnfhtw/RGBStreamer)
+     matrix.vhd:    Adaptions to support lower color depth (tested with 8 Bit per color and 6 Bit per color)
+     pnm2mif:       Bug fixed concerning correct handling of command line parameters - now MIF files for lower color depths (e.g. 6 Bit per color) can be created without problem.
      
 ## TODO: ##
 Tidy up rtl/ctrl.vhd
@@ -65,3 +70,4 @@ V04: 01.04.2016
 V05: 12.04.2016
 V06: 15.04.2016
 V06a: 17.04.2016
+V07: 18.04.2016
