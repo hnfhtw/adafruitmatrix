@@ -55,12 +55,17 @@ V07: Support of lower color depths than 8 Bit per color enabled -> UART input is
      color depth reduction has to be done on the sender side (Android program RGBStreamer was also adapted to send RGB data already scaled to the desired color depth, see https://github.com/hnfhtw/RGBStreamer)
      matrix.vhd:    Adaptions to support lower color depth (tested with 8 Bit per color and 6 Bit per color)
      pnm2mif:       Bug fixed concerning correct handling of command line parameters - now MIF files for lower color depths (e.g. 6 Bit per color) can be created without problem.
+
+V08: matrix.vhd:    UART receiver code made generic -> streaming to different panel combinations were tested and work (e.g. 1x1, 1x2, 1x3, 1x4, 4x1, 4x4, ... (rows x col))
+     pnm2mif:       Bug fixed (output to MIF files is now 2 digits wide per color - see changelog of pnm2mif)
      
 ## TODO: ##
 Tidy up rtl/ctrl.vhd
      -> 1 counter module, 4 instantiations
      -> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
-
+Tidy up rtl/matrix.vhd
+     -> improve bad readability (e.g. things like "natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))")
+	 -> maybe decouple UART receiver from framebuffer decoder and create a new toplevel file which instantiates the UART receiver and the matrix entity separately
 
 ## LAST MODIFIED: ##
 V01: 30.03.2016
@@ -71,3 +76,4 @@ V05: 12.04.2016
 V06: 15.04.2016
 V06a: 17.04.2016
 V07: 18.04.2016
+V08: 19.04.2016

@@ -8,6 +8,7 @@
 // Changelog: 15.04.2016 -> output data format changed from GBR to RGB
 //            17.04.2016 -> Optional parameter to reduce color depth introduced - input color depth is always 8 Bit per color, output color depth can be adjusted by command line parameter (8 Bit per color is default)
 //            18.04.2016 -> Bugs fixed (command line parameter setting of color depth didn't work properly, parameters 0 and 1 for upper/lower framebuffer were switched)
+//            19.04.2016 -> Bug fixed -> output of MIF file RAM content was not 2 digit per color wide -> e.g. the color C1DF00 (RGB) was put out to the MIF file as C1DF0 which lead to an error as the driver used 0C, 1D and F0 instead of C1, DF and 00.
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -100,7 +101,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 0)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
+			printf("%X : %02X%02X%02X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -108,7 +109,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 1)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
+			printf("%X : %02X%02X%02X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -116,7 +117,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 2)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
+			printf("%X : %02X%02X%02X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}
@@ -124,7 +125,7 @@ int main(int argc, char *argv[])
 	{
 		if((i/32)%4 == 3)
 		{
-			printf("%X : %1X%1X%1X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
+			printf("%X : %02X%02X%02X;\n", addrprint, (array[offset+i][0]*((int)pow(2,colordepth)-1))/255, (array[offset+i][1]*((int)pow(2,colordepth)-1))/255, (array[offset+i][2]*((int)pow(2,colordepth)-1))/255);
 			addrprint++;
 		}
 	}

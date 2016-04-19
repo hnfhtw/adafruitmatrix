@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 18.04.2016
+-- Last modified: 19.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -27,9 +27,9 @@ entity matrix is
 	 
 	 generic 
 	 (
-		NO_PANEL_ROWS : natural := 3;					-- number of panel rows
+		NO_PANEL_ROWS : natural := 4;					-- number of panel rows
 		NO_PANEL_COLUMNS : natural := 4;				-- number of panel columns
-		COLORDEPTH : natural := 8;						-- colordepth in Bit
+		COLORDEPTH : natural := 6;						-- colordepth in Bit
 		PIXEL_ROW_ADDRESS_BITS : natural := 4;		-- 4 address lines A-D for the pixel rows
 		NO_PIXEL_COLUMNS_PER_PANEL : natural := 32	-- number of pixels in one row of one panel
 	 );
@@ -65,7 +65,8 @@ architecture rtl of matrix is
     constant C_BLUE_1       : natural := 5;
 	 
 	 constant RAM_ADDR_WIDTH	: natural := PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));
-	 constant WADDR_WIDTH      : natural := natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+1;
+	 --constant WADDR_WIDTH      : natural := natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+1;
+	 constant WADDR_WIDTH      : natural := natural(ceil(log2(real(NO_PANEL_COLUMNS)))) + PIXEL_ROW_ADDRESS_BITS + natural(ceil(log2(real(2*NO_PANEL_ROWS)))) + natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));
 	 
     signal s_addr           : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);
    
@@ -110,7 +111,7 @@ begin
 	 rs232 : entity work.rs232
 		   generic map (
 				 Quarz_Taktfrequenz => 30000000,
-				 Baudrate => 115200
+				 Baudrate => 460800
 		   )
          port map (
 				 RXD			=> s_uart_rx,			-- RS232 received serial data
@@ -144,10 +145,10 @@ begin
 			elsif(s_uart_rx_count = 6) then			
 				if(s_uart_rx_packet(7 downto 0) = s_uart_cs) then
 					s_uart_rx_RGB <= s_uart_rx_packet(31 downto 8);
-					s_waddr_i(4 downto 0) <= s_uart_rx_packet(44 downto 40);	-- X coordinate -> Bit 0 to 4
-					s_waddr_i(13 downto 12) <= s_uart_rx_packet(46 downto 45);	-- X coordinate -> Bit 5 and 6
-					s_waddr_i(8 downto 5) <= s_uart_rx_packet(35 downto 32); 	-- Y coordinate -> Bit 0 to 3
-					s_waddr_i(11 downto 9) <= s_uart_rx_packet(38 downto 36);	-- Y coordinate -> Bit 4 to 6
+					s_waddr_i((natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1) downto 0) <= s_uart_rx_packet(40+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 40);	            -- X coordinate -> Bit 0 to 4 (44 downto 40)-> s_waddr_i(4 downto 0) (XXXXX of s_waddr_i)
+					s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_uart_rx_packet(40+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 40+natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))));	      -- X coordinate -> Bit 5 and 6 (46 downto 45)-> s_waddr_i(13 downto 12) (PP of s_waddr_i)
+					s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+PIXEL_ROW_ADDRESS_BITS-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) <= s_uart_rx_packet(32+PIXEL_ROW_ADDRESS_BITS-1 downto 32); 	-- Y coordinate -> Bit 0 to 3	(35 downto 32)-> s_waddr_i(8 downto 5) (RRRR of s_waddr_i)
+					s_waddr_i(WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))+PIXEL_ROW_ADDRESS_BITS) <= s_uart_rx_packet(32+PIXEL_ROW_ADDRESS_BITS+natural(ceil(log2(real(2*NO_PANEL_ROWS))))-1 downto 32+PIXEL_ROW_ADDRESS_BITS);	-- Y coordinate -> Bit 4 to 6 (36 downto 38)-> s_waddr_i(11 downto 9) (TTT of s_waddr_i)
 					s_we_i <= '1';
 					s_uart_rx_count <= (others => '0');	
 					s_uart_rx_packet <= (others => '0');
@@ -167,7 +168,7 @@ begin
 		  
 
 	-- RGB data decoder (sets s_we signal for correct framebuffer)
-	-- Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = panel row number, RRRR = pixel row number, XXXXX = pixel column number
+	-- Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = halfpanel row number, RRRR = pixel row number, XXXXX = pixel column number
 	--                         Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writting
 	--s_waddr(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0)	<= s_waddr_i(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
 	--s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-natural(ceil(log2(real(NO_PANEL_COLUMNS))))); -- assign address part PP (PP RRR RRRR XXXXX)
@@ -203,7 +204,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "..\img\mif_files\128x32_black.mif"
+			init_file => "..\img\mif_files\128x32_black_6bit.mif"
 		)
 		port map (
 			rclk	=> s_clk,
@@ -219,7 +220,7 @@ begin
 		generic map (
 			DATA_WIDTH => 3*COLORDEPTH,
 			DATA_RANGE => NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS),
-			init_file => "..\img\mif_files\128x32_black.mif"
+			init_file => "..\img\mif_files\128x32_black_6bit.mif"
 		)
 		port map (
 			rclk	=> s_clk,
