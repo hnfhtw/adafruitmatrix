@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 20.04.2016
+-- Last modified: 21.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -46,20 +46,21 @@ entity ctrl is
 end entity ctrl;
 
 architecture rtl of ctrl is
-    constant C_NO_PANEL_COLUMNS_BIT	: natural := natural(ceil(log2(real(NO_PANEL_COLUMNS))));	-- number of bits necessary to represent NO_PANEL_COLUMNS
-	 constant C_NO_PIXEL_COLUMNS_PER_PANEL_BIT : natural := natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));  -- number of bits necessary to represent NO_PIXEL_COLUMNS_PER_PANEL (32 at the current panels)
-	 constant C_NO_PANEL_ROWS_BIT : natural := natural(ceil(log2(real(NO_PANEL_ROWS))));	-- number of bits necessary to represent NO_PANEL_ROWS
+    constant C_NO_PANEL_COLUMNS_BIT					: natural := natural(ceil(log2(real(NO_PANEL_COLUMNS))));	-- number of bits necessary to represent NO_PANEL_COLUMNS
+	 constant C_NO_PIXEL_COLUMNS_PER_PANEL_BIT 	: natural := natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));  -- number of bits necessary to represent NO_PIXEL_COLUMNS_PER_PANEL (32 at the current panels)
+	 constant C_NO_PANEL_ROWS_BIT 					: natural := natural(ceil(log2(real(NO_PANEL_ROWS))));	-- number of bits necessary to represent NO_PANEL_ROWS
 	 	 
-	 signal s_cnt_row, s_cnt_row_nxt : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);				-- 5 bit wide (4 downto 0) -> can count from 0 to 31
-    signal s_cnt_bit, s_cnt_bit_nxt : unsigned(COLORDEPTH downto 0);				-- 9 bit wide (8 downto 0) -> can count from 0 to 255
-    signal s_cnt_pan : unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);		-- 3 bit wide (2 downto 0) -> can count from 0 to 7	
-	 signal s_cnt_pxl, s_cnt_pxl_nxt : unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);				-- 6 bit wide (5 downto 0) -> can count from 0 to 63
+	 signal s_cnt_row, s_cnt_row_nxt 				: unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);				-- 5 bit wide (4 downto 0) -> can count from 0 to 31
+    signal s_cnt_bit, s_cnt_bit_nxt 				: unsigned(COLORDEPTH downto 0);								-- 9 bit wide (8 downto 0) -> can count from 0 to 255
+    signal s_cnt_pan 									: unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);				-- 3 bit wide (2 downto 0) -> can count from 0 to 7	
+	 signal s_cnt_pxl, s_cnt_pxl_nxt 				: unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);		-- 6 bit wide (5 downto 0) -> can count from 0 to 63
 
     signal s_sel : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);						-- 3 bit wide (2 downto 0) -> can count from 0 to 7
-    signal s_row : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);							-- 4 bit wide (3 downto 0) -> can count from 0 to 15
+    signal s_row : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);											-- 4 bit wide (3 downto 0) -> can count from 0 to 15
     signal s_oe  : std_logic_vector(NO_PANEL_ROWS-1 downto 0);
     signal s_lat : std_logic_vector(NO_PANEL_ROWS-1 downto 0);
-
+	 
+	 constant s_brightscale1 : std_logic_vector(4 downto 0) := "01111";		-- HN DEBUG
 begin
     -- counter that loops through all pixels
     p_cnt : process(s_clk_i, s_reset_n_i)
@@ -133,8 +134,8 @@ begin
             -- with increasing value of brightscale
             -- FIXME: reduces color depth, would be better to change overall duty cycle
             -- or remove entirely -- it is not really necessary
-            --if (s_cnt_pxl >= ((2**natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) - 1) - unsigned(s_brightscale))) then			-- ** means ^ (exponentiation operator) -> s_cnt_pxl >= 2^5 - 1 - s_brightscale
-            if (s_cnt_pxl >= NO_PIXEL_COLUMNS_PER_PANEL) then
+			-- HN: brightness scaling -> enable the panel only for part of the time (determined by difference of 31 - s_brightscale
+            if (s_cnt_pxl >= ((NO_PIXEL_COLUMNS_PER_PANEL-1) - unsigned(s_brightscale))) then	-- s_cnt_pxl >= 2^5 - 1 - s_brightscale
 					s_oe <= (others => '1');
 				end if;
 

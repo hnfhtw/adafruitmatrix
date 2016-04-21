@@ -16,14 +16,14 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- RAM entity (simple dual-port RAM with two read/write addresses and clocks)
--- Last modified: 01.04.2016
+-- Last modified: 21.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
-entity testram is
+entity ram is
 
 	generic 
 	(
@@ -43,9 +43,9 @@ entity testram is
 		q		: out std_logic_vector((DATA_WIDTH -1) downto 0)
 	);
 
-end testram;
+end ram;
 
-architecture rtl of testram is
+architecture rtl of ram is
 
 	-- Build a 2-D array type for the RAM
 	subtype word_t is std_logic_vector((DATA_WIDTH-1) downto 0);

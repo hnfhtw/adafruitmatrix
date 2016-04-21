@@ -61,6 +61,8 @@ V08: matrix.vhd:    UART receiver code made generic -> streaming to different pa
 
 V09: matrix.vhd:    Code cleaned up 
      ctrl.vhd:      Code cleaned up, 4 counters merged to 1
+	 
+V10: Code cleaned up in matrix.vhd and ctrl.vhd (rename of several signals); impl\testram.vhd renamed and moved to rtl\ram.vhd; rs232.vhd renamed to uart.vhd
      
 ## TODO: ##
 Tidy up rtl/matrix.vhd
@@ -78,3 +80,4 @@ V06a: 17.04.2016
 V07: 18.04.2016
 V08: 19.04.2016
 V09: 20.04.2016
+V10: 21.04.2016
