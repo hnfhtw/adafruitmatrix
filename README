@@ -58,13 +58,13 @@ V07: Support of lower color depths than 8 Bit per color enabled -> UART input is
 
 V08: matrix.vhd:    UART receiver code made generic -> streaming to different panel combinations were tested and work (e.g. 1x1, 1x2, 1x3, 1x4, 4x1, 4x4, ... (rows x col))
      pnm2mif:       Bug fixed (output to MIF files is now 2 digits wide per color - see changelog of pnm2mif)
+
+V09: matrix.vhd:    Code cleaned up 
+     ctrl.vhd:      Code cleaned up, 4 counters merged to 1
      
 ## TODO: ##
-Tidy up rtl/ctrl.vhd
-     -> 1 counter module, 4 instantiations
-     -> check counter, currently BCM Bit 0 is written to the wrong (previous) RGB pixel row address (A-D)
 Tidy up rtl/matrix.vhd
-     -> improve bad readability (e.g. things like "natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))")
+     -> further improve bad readability (e.g. change long constant names like C_NO_PIXEL_COLUMNS_PER_PANEL_BIT)
 	 -> maybe decouple UART receiver from framebuffer decoder and create a new toplevel file which instantiates the UART receiver and the matrix entity separately
 
 ## LAST MODIFIED: ##
@@ -77,3 +77,4 @@ V06: 15.04.2016
 V06a: 17.04.2016
 V07: 18.04.2016
 V08: 19.04.2016
+V09: 20.04.2016

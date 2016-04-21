@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 15.04.2016
+-- Last modified: 20.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -46,11 +46,14 @@ entity ctrl is
 end entity ctrl;
 
 architecture rtl of ctrl is
-    signal s_cnt_row, s_cnt_row_nxt : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);				-- 5 bit wide (4 downto 0) -> can count from 0 to 31
+    constant C_NO_PANEL_COLUMNS_BIT	: natural := natural(ceil(log2(real(NO_PANEL_COLUMNS))));	-- number of bits necessary to represent NO_PANEL_COLUMNS
+	 constant C_NO_PIXEL_COLUMNS_PER_PANEL_BIT : natural := natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))));  -- number of bits necessary to represent NO_PIXEL_COLUMNS_PER_PANEL (32 at the current panels)
+	 constant C_NO_PANEL_ROWS_BIT : natural := natural(ceil(log2(real(NO_PANEL_ROWS))));	-- number of bits necessary to represent NO_PANEL_ROWS
+	 	 
+	 signal s_cnt_row, s_cnt_row_nxt : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);				-- 5 bit wide (4 downto 0) -> can count from 0 to 31
     signal s_cnt_bit, s_cnt_bit_nxt : unsigned(COLORDEPTH downto 0);				-- 9 bit wide (8 downto 0) -> can count from 0 to 255
-    signal s_cnt_pan : unsigned(natural(ceil(log2(real(NO_PANEL_COLUMNS)))) downto 0);
-	 --signal s_cnt_pan, s_cnt_pan_nxt : unsigned(natural(ceil(log2(real(NO_PANEL_COLUMNS)))) downto 0);				-- 3 bit wide (2 downto 0) -> can count from 0 to 7
-	 signal s_cnt_pxl, s_cnt_pxl_nxt : unsigned(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL)))) downto 0);				-- 6 bit wide (5 downto 0) -> can count from 0 to 63
+    signal s_cnt_pan : unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);		-- 3 bit wide (2 downto 0) -> can count from 0 to 7	
+	 signal s_cnt_pxl, s_cnt_pxl_nxt : unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);				-- 6 bit wide (5 downto 0) -> can count from 0 to 63
 
     signal s_sel : std_logic_vector(natural(ceil(log2(real(COLORDEPTH))))-1 downto 0);						-- 3 bit wide (2 downto 0) -> can count from 0 to 7
     signal s_row : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);							-- 4 bit wide (3 downto 0) -> can count from 0 to 15
@@ -58,78 +61,46 @@ architecture rtl of ctrl is
     signal s_lat : std_logic_vector(NO_PANEL_ROWS-1 downto 0);
 
 begin
-
-
-    -- TODO these four counters could easily be merged into one
-
-    s_cnt_row_nxt <= s_cnt_row + 1;
-
-    -- count up the pixel rows (ABCD)
-    p_cnt_row : process(s_clk_i, s_reset_n_i)
-    begin
-        if(s_reset_n_i = '0') then
-            s_cnt_row <= (others => '0');			-- set row counter to zero in case of a reset (others => '0' sets all bits to zero)
-        elsif(rising_edge(s_clk_i)) then
-            --if(s_cnt_bit_nxt(COLORDEPTH) = '1' and s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-				if(s_cnt_bit_nxt(COLORDEPTH) = '1' and (s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-					 s_cnt_row <= '0' & s_cnt_row_nxt(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
-            end if;
-        end if;
-    end process p_cnt_row;
-
-    s_cnt_bit_nxt <= s_cnt_bit + 1;
-
-    -- count up the BCM phases
-    p_cnt_bit : process(s_clk_i, s_reset_n_i)
-    begin
-        if(s_reset_n_i = '0') then
-            s_cnt_bit <= (others => '0');
-        elsif(rising_edge(s_clk_i)) then
-            --if(s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1' and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-				if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-					 s_cnt_bit <= '0' & s_cnt_bit_nxt(COLORDEPTH-1 downto 0);
-            end if;
-        end if;
-    end process p_cnt_bit;
-
-    --s_cnt_pan_nxt <= s_cnt_pan + 1;
-
-    -- count up the panels
-    p_cnt_pan : process(s_clk_i, s_reset_n_i)
-    begin
-        if(s_reset_n_i = '0') then
-            s_cnt_pan <= (others => '0');
-        elsif(rising_edge(s_clk_i)) then
-            if(s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-						if(s_cnt_pan = NO_PANEL_COLUMNS-1) then
-							s_cnt_pan <= (others => '0');
-						else
-							s_cnt_pan <= s_cnt_pan + 1;
-						end if;
-					 --s_cnt_pan <= '0' & s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0);
-            end if;
-        end if;
-    end process p_cnt_pan;
+    -- counter that loops through all pixels
+    p_cnt : process(s_clk_i, s_reset_n_i)
+	 begin
+      if(s_reset_n_i = '0') then
+		  s_cnt_pxl <= (others => '0');
+		  s_cnt_pan <= (others => '0');
+		  s_cnt_bit <= (others => '0');
+	     s_cnt_row <= (others => '0');
+		elsif(rising_edge(s_clk_i)) then
+		  s_cnt_pxl <= '0' & s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0);            -- count up pixels in one panel
+		  
+		  if(s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then                            -- count up the panels
+		    if(s_cnt_pan = NO_PANEL_COLUMNS-1) then
+			   s_cnt_pan <= (others => '0');
+			 else
+			   s_cnt_pan <= s_cnt_pan + 1;
+			 end if;
+		  end if;
+		  
+		  if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then     -- count up the BCM (e.g. up to 255 at 8 bit colordepth)
+		    s_cnt_bit <= '0' & s_cnt_bit_nxt(COLORDEPTH-1 downto 0);
+		  end if;
+		  
+		  if(s_cnt_bit_nxt(COLORDEPTH) = '1' and (s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then       -- count up the pixel rows (ABCD)
+		    s_cnt_row <= '0' & s_cnt_row_nxt(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
+		  end if;	 
+		end if;  
+	 end process p_cnt;
 
     s_cnt_pxl_nxt <= s_cnt_pxl + 1;
+    s_cnt_bit_nxt <= s_cnt_bit + 1;
+    s_cnt_row_nxt <= s_cnt_row + 1;
 
-    -- count up the pixels in one panel
-    p_cnt_pxl : process(s_clk_i, s_reset_n_i)
-    begin
-        if(s_reset_n_i = '0') then
-            s_cnt_pxl <= (others => '0');
-        elsif(rising_edge(s_clk_i)) then
-            s_cnt_pxl <= '0' & s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0);
-        end if;
-    end process p_cnt_pxl;
-
-   s_addr_o <=  std_logic_vector(s_cnt_pan(natural(ceil(log2(real(NO_PANEL_COLUMNS))))-1 downto 0)) &
-					 --std_logic_vector(to_unsigned(s_cnt_pan, natural(ceil(log2(real(NO_PANEL_COLUMNS)))))) &
+	-- assign output signal which always correspons to the current pixel (necessary to lookup RGB values in framebuffers and generate RGB0/1 output signals)
+   s_addr_o <=  std_logic_vector(s_cnt_pan(C_NO_PANEL_COLUMNS_BIT-1 downto 0)) &
 					 std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0)) &
-                std_logic_vector(s_cnt_pxl(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))-1 downto 0));
+                std_logic_vector(s_cnt_pxl(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0));
 
 
-    -- generate the bit select signal for BCM
+    -- generate the bit select signal for BCM (necessary to determine which bit of the e.g. 6 bit wide RGB values it put to the RGB0/1 outputs)
     p_decode_sel : process(s_cnt_bit)
     begin
         s_sel <= (others => '0');
@@ -139,8 +110,6 @@ begin
             end if;
         end loop;
     end process p_decode_sel;
-
-
 
     s_oe_o  <= s_oe;
 	 s_lat_o  <= s_lat;
@@ -156,9 +125,7 @@ begin
             s_oe    <= (others => '1');
             s_row   <= (others => '0');
         elsif(rising_edge(s_clk_i)) then
-            --s_lat_o <= s_lat;
             s_row_o <= s_row;
-
             s_lat <= (others => '0');
             s_oe  <= (others => '0');
 
@@ -171,8 +138,7 @@ begin
 					s_oe <= (others => '1');
 				end if;
 
-            --if((s_cnt_pan_nxt(natural(ceil(log2(real(NO_PANEL_COLUMNS))))) = '1') and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
-			if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(natural(ceil(log2(real(NO_PIXEL_COLUMNS_PER_PANEL))))) = '1') then
+			if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then
                 s_lat <= (others => '1');
                 s_row <= std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0));
             end if;
