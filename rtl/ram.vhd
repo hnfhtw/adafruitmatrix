@@ -16,64 +16,65 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- RAM entity (simple dual-port RAM with two read/write addresses and clocks)
--- Last modified: 21.04.2016
+-- Last modified: 28.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
 use ieee.numeric_std.all;
 use ieee.math_real.all;
 
+library work;
+use work.calc_pkg.all;
+
 entity ram is
 
-	generic 
-	(
-		DATA_WIDTH : natural := 24;
-		DATA_RANGE : natural := 2048;
-		init_file : string
-	);
+    generic (
+        DATA_WIDTH : natural := 24;
+        DATA_RANGE : natural := 2048;
+        init_file : string
+    );
 
-	port 
-	(
-		rclk	: in std_logic;
-		wclk	: in std_logic;
-		raddr	: in std_logic_vector((natural(ceil(log2(real(DATA_RANGE))))-1) downto 0);
-		waddr	: in std_logic_vector((natural(ceil(log2(real(DATA_RANGE))))-1) downto 0);
-		data	: in std_logic_vector((DATA_WIDTH-1) downto 0);
-		we		: in std_logic := '1';
-		q		: out std_logic_vector((DATA_WIDTH -1) downto 0)
-	);
+	port (
+        rclk	: in std_logic;
+        wclk	: in std_logic;
+        raddr	: in std_logic_vector(log2ceil(DATA_RANGE)-1 downto 0);
+        waddr	: in std_logic_vector(log2ceil(DATA_RANGE)-1 downto 0);
+        data	: in std_logic_vector(DATA_WIDTH-1 downto 0);
+        we		: in std_logic := '1';
+        q		: out std_logic_vector(DATA_WIDTH -1 downto 0)
+    );
 
 end ram;
 
 architecture rtl of ram is
 
-	-- Build a 2-D array type for the RAM
-	subtype word_t is std_logic_vector((DATA_WIDTH-1) downto 0);
-	type memory_t is array(DATA_RANGE-1 downto 0) of word_t;
+    -- Build a 2-D array type for the RAM
+    subtype word_t is std_logic_vector(DATA_WIDTH-1 downto 0);
+    type memory_t is array(DATA_RANGE-1 downto 0) of word_t;
 	
-	-- Declare the RAM signal.	
-	signal ram : memory_t;
+    -- Declare the RAM signal.	
+    signal ram : memory_t;
 	
-	attribute ram_init_file : string;
-	attribute ram_init_file of ram :
-	signal is init_file;
+    attribute ram_init_file : string;
+    attribute ram_init_file of ram :
+    signal is init_file;
 
 begin
 
-	process(wclk)
+    process(wclk)
 	begin
-	if(rising_edge(wclk)) then 
-		if(we = '1') then
-			ram(to_integer(unsigned(waddr))) <= data;
-		end if;
-	end if;
-	end process;
+        if(rising_edge(wclk)) then 
+            if(we = '1') then
+                ram(to_integer(unsigned(waddr))) <= data;
+            end if;
+        end if;
+    end process;
 
-	process(rclk)
-	begin
-	if(rising_edge(rclk)) then 
-		q <= ram(to_integer(unsigned(raddr)));
-	end if;
-	end process;
+    process(rclk)
+    begin
+        if(rising_edge(rclk)) then 
+            q <= ram(to_integer(unsigned(raddr)));
+        end if;
+    end process;
 
 end rtl;

@@ -32,7 +32,7 @@ V03: Reservation of unused RAM avoided:
 
 V04: RGB data decoder implemented which sets the s_we signal for the correct framebuffer.
      matrix.vhd:     Decoder code implemented
-     Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = panel row number, RRRR = pixel row number, XXXXX = pixel column number
+     Example for 4x4 Panels: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = halfpanel row number, RRRR = pixel row number, XXXXX = pixel column number
                              Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
      -> the 24 Bit wide data input s_data_i, the write clock s_wclk_i and the relevant parts of s_waddr_i are directly connected to all framebuffers
      -> writing this data to the correct framebuffer is ensued by the decoder which evaluates the TTT part of the input address s_waddr_i
@@ -63,11 +63,18 @@ V09: matrix.vhd:    Code cleaned up
      ctrl.vhd:      Code cleaned up, 4 counters merged to 1
 	 
 V10: Code cleaned up in matrix.vhd and ctrl.vhd (rename of several signals); impl\testram.vhd renamed and moved to rtl\ram.vhd; rs232.vhd renamed to uart.vhd
+
+V11: UART Receiver and matrix entity separated -> new toplevel created which instantiates the receiver and the matrix entity separately
+     Input address format of matrix entity changed from PP TTT RRRR XXXXX to TTT RRRR PP XXXXX -> now the framebuffer input data which is written to the matrix entity conveniently row by row from 000 0000 00 00000 (top left pixel of 128x128 image) to 111 1111 11 11111 (bottom right pixel of 128x128 image)
+     Calculation package added with a function for all the log2 calculations -> now "log2ceil(x)" is used instead of "natural(ceil(log2(real(x))))"
+     calc_pkg.vhd:  Calculation package with log2ceil() function
+     ctrl.vhd:      Code cleaned up
+     matrix.vhd:    UART receiver and PLL code received -> new toplevel was created, matrix.vhd can now be used for other designs which either directly write to the RAM interface or use SPI, I2C, ...
+     toplevel.vhd:  New toplevel entity which instantiates a UART receiver, the matrix entity, the PLL for clock generation and a process which builds valid RGB packets out of the received UART bytes and drives the RAM interface of the matrix entity with the correct data (x, y, R, G, B)
      
 ## TODO: ##
 Tidy up rtl/matrix.vhd
      -> further improve bad readability (e.g. change long constant names like C_NO_PIXEL_COLUMNS_PER_PANEL_BIT)
-	 -> maybe decouple UART receiver from framebuffer decoder and create a new toplevel file which instantiates the UART receiver and the matrix entity separately
 
 ## LAST MODIFIED: ##
 V01: 30.03.2016
@@ -81,3 +88,4 @@ V07: 18.04.2016
 V08: 19.04.2016
 V09: 20.04.2016
 V10: 21.04.2016
+V11: 28.04.2016
