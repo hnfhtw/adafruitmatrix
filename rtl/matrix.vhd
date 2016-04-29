@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Matrix Driver entity
--- Last modified: 28.04.2016
+-- Last modified: 29.04.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -42,8 +42,8 @@ entity matrix is
         s_reset_n_i : in  std_logic;    -- reset input
         s_wobble_i  : in  std_logic;    -- wobble input for brightness dimming
         s_wclk_i    : in std_logic;
-        s_waddr_i   : in std_logic_vector(log2ceil(NO_PANEL_COLUMNS) + PIXEL_ROW_ADDRESS_BITS + log2ceil(NO_PANEL_ROWS) + log2ceil(NO_PIXEL_COLUMNS_PER_PANEL) downto 0);  -- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
-        -- s_waddr_i : in std_logic_vector(C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
+        s_waddr_i   : in std_logic_vector(log2ceil(NO_PANEL_COLUMNS) + PIXEL_ROW_ADDRESS_BITS + log2ceil(NO_PANEL_ROWS) + log2ceil(NO_PIXEL_COLUMNS_PER_PANEL) + 1 downto 0);  -- write address input to decoder for framebuffers (e.g. format at 4x4 panels: "A-TTT-RRRR-PP-XXXXX" -> 15 Bit)
+        -- s_waddr_i : in std_logic_vector(C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT + 1 downto 0);	-- write address input to decoder for framebuffers (e.g. format at 4x4 panels: "A-TTT-RRRR-PP-XXXXX" -> 15 Bit)
         s_wdata_i   : in std_logic_vector(3*8-1 downto 0);  -- 3x8 bit wide RGB output which goes to the decoder for framebuffers
         s_we_i      : in std_logic;                         -- write enable input to decoder for framebuffers
         s_data_o    : out std_logic_vector((NO_PANEL_ROWS*6) - 1 downto 0);                     -- RGB output signals (R0/R1, G0/G1, B0/B1) (6 per panel row)
@@ -68,7 +68,7 @@ architecture rtl of matrix is
     constant C_NO_PANEL_ROWS_BIT              : natural := log2ceil(NO_PANEL_ROWS);                -- number of bits necessary to represent NO_PANEL_ROWS
 	 
     constant RAM_ADDR_WIDTH     : natural := PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_COLUMNS_BIT + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT;
-    constant WADDR_WIDTH        : natural := C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + 1 + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT;
+    constant WADDR_WIDTH        : natural := C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + 1 + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT + 1;
     -- end constants
 	
     -- matrix driver
@@ -85,14 +85,16 @@ architecture rtl of matrix is
     signal s_waddr              : std_logic_vector(RAM_ADDR_WIDTH-1 downto 0);      -- decoded writing address output which goes to all framebuffers
     signal s_wdata              : std_logic_vector(3*COLORDEPTH-1 downto 0);        -- RGB data output of decoder which goes to all framebuffers
     signal s_we                 : std_logic_vector(2*NO_PANEL_ROWS-1 downto 0);     -- write enable for each framebuffer - to select correct framebuffer in which to write wdata at waddr												-- write clock (for decoder, UART receiver and framebuffer writing) 
+    signal s_ramindex           : unsigned(RAM_ADDR_WIDTH-1 downto 0);
+    signal s_weblock             : std_logic;
     -- end RGB data decoder
 	
 begin
     -- RGB data decoder (sets s_we signal for correct framebuffer)
-    -- Example for 4x4 Panels: OLD: Input address format s_waddr_i = PP TTT RRRR XXXXX -> PP = panel column number, TTT = halfpanel row number (0 = upper half of first panel row, 1 = lower half of first panel row, ...), RRRR = pixel row number, XXXXX = pixel column number
-    --                         OLD: Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
-    --                         NEW: Input address format s_waddr_i = TTT RRRR PP XXXXX -> PP = panel column number, TTT = halfpanel row number (0 = upper half of first panel row, 1 = lower half of first panel row, ...), RRRR = pixel row number, XXXXX = pixel column number
-    --                         NEW: Output address format s_waddr = PP RRRR XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
+    -- Example for 4x4 Panels: OLD: Input address format s_waddr_i = PP-TTT-RRRR-XXXXX -> PP = panel column number, TTT = halfpanel row number (0 = upper half of first panel row, 1 = lower half of first panel row, ...), RRRR = pixel row number, XXXXX = pixel column number
+    --                         OLD: Output address format s_waddr = PP-RRRR-XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
+    --                         NEW: Input address format s_waddr_i = A-TTT-RRRR-PP-XXXXX -> PP = panel column number, TTT = halfpanel row number (0 = upper half of first panel row, 1 = lower half of first panel row, ...), RRRR = pixel row number, XXXXX = pixel column number, A = fill all framebuffers with s_wdata if A=1
+    --                         NEW: Output address format s_waddr = PP-RRRR-XXXXX and s_we(TTT) -> set write address at all framebuffers but activate only the correct one for writing
     
     p_decode : process(s_wclk_i, s_reset_n_i)
     begin
@@ -101,24 +103,38 @@ begin
             s_wdata <= (others => '0');
         elsif(rising_edge(s_wclk_i)) then
             s_we <= (others => '0');
-            s_wdata <= (others => '0');
+            --s_wdata <= (others => '0');
 			
-            if(s_we_i = '1') then
-                -- address assignment for input address format: PP TTT RRRR XXXXX:
-                --s_waddr(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0)	<= s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0); -- assign address part XXXXX (PP RRR RRRR XXXXX)
-                --s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT); -- assign address part PP (PP RRR RRRR XXXXX)
-                --s_waddr(RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT); -- assign address part RRRR (PP RRR RRRR XXXXX)
+            if(s_we_i = '1' and s_weblock <= '0') then
+                -- address assignment for input address format: PP-TTT-RRRR-XXXXX:
+                --s_waddr(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0)	<= s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0); -- assign address part XXXXX (PP-TTT-RRRR-XXXXX)
+                --s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT) <= s_waddr_i(WADDR_WIDTH-1 downto WADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT); -- assign address part PP (PP-TTT-RRRR-XXXXX)
+                --s_waddr(RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT); -- assign address part RRRR (PP-TTT-RRRR-XXXXX)
                 --s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT-1 downto PIXEL_ROW_ADDRESS_BITS+C_NO_PIXEL_COLUMNS_PER_PANEL_BIT)))) <= '1';
                 
-                -- address assignment for input address format: TTT RRRR PP XXXXX:
+                -- address assignment for input address format: A-TTT-RRRR-PP-XXXXX:
                 s_waddr(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0)	<= s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0);  -- assign address part XXXXX
                 s_waddr(RAM_ADDR_WIDTH-1 downto RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT) <= s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT); -- assign address part PP
                 s_waddr(RAM_ADDR_WIDTH-C_NO_PANEL_COLUMNS_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) <= s_waddr_i(PIXEL_ROW_ADDRESS_BITS+C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT); -- assign address part RRRR
-                s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT+PIXEL_ROW_ADDRESS_BITS)))) <= '1';  -- assign address part TTT to correct write enable signal for correct framebuffer
-
+                s_we(to_integer(unsigned(s_waddr_i(WADDR_WIDTH-2 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT+PIXEL_ROW_ADDRESS_BITS)))) <= '1';  -- assign address part TTT to correct write enable signal for correct framebuffer
+                      
                 s_wdata(3*COLORDEPTH-1 downto 2*COLORDEPTH) <= s_wdata_i(COLORDEPTH-1+16 downto 16); 		-- R
                 s_wdata(2*COLORDEPTH-1 downto COLORDEPTH) <= s_wdata_i(COLORDEPTH-1+8 downto 8); 			-- G
                 s_wdata(COLORDEPTH-1 downto 0) <= s_wdata_i(COLORDEPTH-1 downto 0); 						-- B
+                
+                -- enable writing of whole ram blocks if MSB (address part 'A') of s_waddr_i is set
+                if(s_waddr_i(s_waddr_i'length - 1) = '1') then
+                    s_weblock <= '1';
+                end if;
+                
+            elsif(s_weblock = '1') then     -- fill all ram blocks with the same s_wdata color
+                s_waddr <= std_logic_vector(s_ramindex);
+                s_ramindex <= s_ramindex + 1;
+                s_we <= (others => '1');
+                if(s_ramindex = to_unsigned(NO_PIXEL_COLUMNS_PER_PANEL*NO_PANEL_COLUMNS*(2**PIXEL_ROW_ADDRESS_BITS)-1, s_ramindex'length)) then
+                    s_ramindex <= (others => '0');
+                    s_weblock <= '0';
+                end if;
             end if;
         end if;
     end process p_decode;

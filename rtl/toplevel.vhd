@@ -29,7 +29,7 @@ use work.calc_pkg.all;
 entity toplevel is
   
     generic ( 
-        NO_PANEL_ROWS : natural := 1;               -- number of panel rows
+        NO_PANEL_ROWS : natural := 4;               -- number of panel rows
         NO_PANEL_COLUMNS : natural := 4;            -- number of panel columns
         COLORDEPTH : natural := 6;                  -- colordepth in Bit
         PIXEL_ROW_ADDRESS_BITS : natural := 4;      -- 4 address lines A-D for the pixel rows
@@ -56,7 +56,7 @@ architecture rtl of toplevel is
     constant C_NO_PANEL_COLUMNS_BIT           : natural := log2ceil(NO_PANEL_COLUMNS);             -- number of bits necessary to represent NO_PANEL_COLUMNS
     constant C_NO_PIXEL_COLUMNS_PER_PANEL_BIT : natural := log2ceil(NO_PIXEL_COLUMNS_PER_PANEL);   -- number of bits necessary to represent NO_PIXEL_COLUMNS_PER_PANEL (32 at the current panels)
     constant C_NO_PANEL_ROWS_BIT              : natural := log2ceil(NO_PANEL_ROWS);                -- number of bits necessary to represent NO_PANEL_ROWS
-    constant WADDR_WIDTH                      : natural := C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + 1 + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT;
+    constant WADDR_WIDTH                      : natural := C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + 1 + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT + 1;
     -- end constants
  
     -- matrix driver
@@ -81,7 +81,7 @@ architecture rtl of toplevel is
     signal s_uart_cs         : std_logic_vector(7 downto 0);
  
     signal s_wdata_i         : std_logic_vector(3*8-1 downto 0);    -- 3x8 bit wide RGB output which goes to the decoder for framebuffers
-    signal s_waddr_i         : std_logic_vector(C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0); -- write address input to decoder for framebuffers (e.g. format at 4x4 panels: PP RRRRRRR XXXXX -> 14 Bit)
+    signal s_waddr_i         : std_logic_vector(C_NO_PANEL_COLUMNS_BIT + PIXEL_ROW_ADDRESS_BITS + C_NO_PANEL_ROWS_BIT + C_NO_PIXEL_COLUMNS_PER_PANEL_BIT + 1 downto 0); -- write address input to decoder for framebuffers (e.g. format at 4x4 panels: "A-TTT-RRRR-PP-XXXXX" -> 15 Bit)
     signal s_we_i            : std_logic;   -- write enable input to decoder for framebuffers
     signal s_wclk_i          : std_logic;   -- write clock (for decoder, UART receiver and framebuffer writing) 
     -- end UART receiver
@@ -159,7 +159,7 @@ begin
                     
                     -- address assignment for input address format: TTT RRRR PP XXXXX:
                     s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT-1 downto 0) <= s_uart_rx_packet(40+C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT-1 downto 40);  -- assign x coordinate of pixel to address part PP XXXXX of s_waddr_i
-                    s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT+PIXEL_ROW_ADDRESS_BITS+C_NO_PANEL_ROWS_BIT+1-1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT) <= s_uart_rx_packet(32+PIXEL_ROW_ADDRESS_BITS+C_NO_PANEL_ROWS_BIT+1-1 downto 32);  -- assign y coordinate of pixel to address part TTT RRRR of s_waddr_i
+                    s_waddr_i(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT+PIXEL_ROW_ADDRESS_BITS+C_NO_PANEL_ROWS_BIT+1 downto C_NO_PIXEL_COLUMNS_PER_PANEL_BIT+C_NO_PANEL_COLUMNS_BIT) <= s_uart_rx_packet(32+PIXEL_ROW_ADDRESS_BITS+C_NO_PANEL_ROWS_BIT+1 downto 32);  -- assign y coordinate of pixel to address part A TTT RRRR of s_waddr_i
                     
                     s_we_i <= '1';
                     s_uart_rx_count <= (others => '0'); 

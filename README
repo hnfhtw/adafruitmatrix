@@ -71,6 +71,10 @@ V11: UART Receiver and matrix entity separated -> new toplevel created which ins
      ctrl.vhd:      Code cleaned up
      matrix.vhd:    UART receiver and PLL code received -> new toplevel was created, matrix.vhd can now be used for other designs which either directly write to the RAM interface or use SPI, I2C, ...
      toplevel.vhd:  New toplevel entity which instantiates a UART receiver, the matrix entity, the PLL for clock generation and a process which builds valid RGB packets out of the received UART bytes and drives the RAM interface of the matrix entity with the correct data (x, y, R, G, B)
+
+V12: Input address format of matrix entity changed from TTT-RRRR-PP-XXXXX to A-TTT-RRRR-PP-XXXXX -> the new MSB is used to fill all framebuffers (all ram blocks) with the same color (s_wdata_i)
+     matrix.vhd:    s_waddr_i width increased by 1 Bit -> adaptions were necessary, and mechanism implemented which fills all framebuffers with the same data once a write attempt to an address with MSB=1 (s_waddr_i) is done
+     toplevel.vhd:  s_waddr_i width increased by 1 Bit -> adaptions were necessary,
      
 ## TODO: ##
 Tidy up rtl/matrix.vhd
@@ -89,3 +93,4 @@ V08: 19.04.2016
 V09: 20.04.2016
 V10: 21.04.2016
 V11: 28.04.2016
+V12: 29.04.2016
