@@ -76,6 +76,17 @@ V12: Input address format of matrix entity changed from TTT-RRRR-PP-XXXXX to A-T
      matrix.vhd:    s_waddr_i width increased by 1 Bit -> adaptions were necessary, and mechanism implemented which fills all framebuffers with the same data once a write attempt to an address with MSB=1 (s_waddr_i) is done
      toplevel.vhd:  s_waddr_i width increased by 1 Bit -> adaptions were necessary,
      
+V13: BCM bit counter counted 1 step too much -> e.g. for 8 bit colour depth it counted from 0 to 255(and shifted-in and latched data for 256 times) -> the bit 0 was driven 2 times instead of 1 time
+     To get 8 bit resolution (256 different levels) the data have to be shifted-in only 255 times -> so the counter has to count from 0 to 254
+     Additionally, the 180° delayed clock input of the matrix entity was removed (at V12 the matrix entity had 2 clock inputs) 
+     -> this clock, used as the output clock for the displays, is exchanged by the negated input clock of the matrix entity   
+     toplevel.vhd:  Remove s_clk1 and c1 of the PLL
+     matrix.vhd:    Remove s_clk180_i input, set s_clk_o outputs to "not s_clk_i" 
+     ctrl.vhd:      Change BCM bit counter (formerly overflow counter was used that counted from 0 to 255 at 8bit colordepth, now one counter signal is compared to the endvalue and counting goes from 0 to 254)
+                    Change generation of s_sel signal which determines which bit of the RGB data is used for the RGB0/1 outputs -> "if (((2**i) - 1) <= s_cnt_bit) then" -> "<=" instead of "<" in order to write bit 0 only 1 times instead of 2 times
+                    
+     
+     
 ## TODO: ##
 Tidy up rtl/matrix.vhd
      -> further improve bad readability (e.g. change long constant names like C_NO_PIXEL_COLUMNS_PER_PANEL_BIT)
@@ -94,3 +105,4 @@ V09: 20.04.2016
 V10: 21.04.2016
 V11: 28.04.2016
 V12: 29.04.2016
+V13: 19.05.2016

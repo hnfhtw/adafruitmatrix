@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Toplevel entity
--- Last modified: 28.04.2016
+-- Last modified: 19.05.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -29,7 +29,7 @@ use work.calc_pkg.all;
 entity toplevel is
   
     generic ( 
-        NO_PANEL_ROWS : natural := 4;               -- number of panel rows
+        NO_PANEL_ROWS : natural := 1;               -- number of panel rows
         NO_PANEL_COLUMNS : natural := 4;            -- number of panel columns
         COLORDEPTH : natural := 6;                  -- colordepth in Bit
         PIXEL_ROW_ADDRESS_BITS : natural := 4;      -- 4 address lines A-D for the pixel rows
@@ -62,7 +62,6 @@ architecture rtl of toplevel is
     -- matrix driver
     signal s_reset_n : std_logic;
     signal s_clk     : std_logic;
-    signal s_clk1    : std_logic;
     signal s_locked  : std_logic_vector(1 downto 0);
     signal s_reset   : std_logic;
 
@@ -112,7 +111,6 @@ begin
         )
         port map (
             s_clk_i     => s_clk,       -- clock input
-            s_clk180_i  => s_clk1,      -- clock input 180deg delayed
             s_reset_n_i => s_reset_n,   -- reset input
             s_wobble_i  => s_wobble_i,  -- wobble input for brightness dimming
             s_wclk_i    => s_wclk_i,    -- framebuffer write clock
@@ -183,7 +181,6 @@ begin
             areset => s_reset,
             inclk0 => s_clk_i,
             c0     => s_clk,
-            c1     => s_clk1,
             locked => s_locked(0)
         );
    

@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 28.04.2016
+-- Last modified: 19.05.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -55,7 +55,7 @@ architecture rtl of ctrl is
     constant C_NO_PANEL_ROWS_BIT                : natural := log2ceil(NO_PANEL_ROWS);              -- number of bits necessary to represent NO_PANEL_ROWS
 	 	 
     signal s_cnt_row, s_cnt_row_nxt             : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);            -- 5 bit wide (4 downto 0) -> can count from 0 to 31
-    signal s_cnt_bit, s_cnt_bit_nxt             : unsigned(COLORDEPTH downto 0);                        -- 9 bit wide (8 downto 0) -> can count from 0 to 255
+    signal s_cnt_bit                            : unsigned(COLORDEPTH downto 0);                        -- 9 bit wide (8 downto 0) -> can count from 0 to 511 (if COLORDEPTH = 8)
     signal s_cnt_pan                            : unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);            -- 3 bit wide (2 downto 0) -> can count from 0 to 7	
     signal s_cnt_pxl, s_cnt_pxl_nxt             : unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);  -- 6 bit wide (5 downto 0) -> can count from 0 to 63
 
@@ -84,18 +84,21 @@ begin
                 end if;
             end if;
 		  
-            if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then -- count up the BCM (e.g. up to 255 at 8 bit colordepth)
-                s_cnt_bit <= '0' & s_cnt_bit_nxt(COLORDEPTH-1 downto 0);
+            if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then -- count up the BCM (e.g. from 0 to 254 at 8 bit colordepth -> 255 steps for 256 greylevels)
+                if(s_cnt_bit = (2**COLORDEPTH)-2) then
+                    s_cnt_bit <= (others => '0');
+                else
+                    s_cnt_bit <= s_cnt_bit + 1;
+                end if;
             end if;
 		  
-            if(s_cnt_bit_nxt(COLORDEPTH) = '1' and (s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then -- count up the pixel rows (ABCD)
+            if(s_cnt_bit = (2**COLORDEPTH)-2 and (s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then -- count up the pixel rows (ABCD)
                 s_cnt_row <= '0' & s_cnt_row_nxt(PIXEL_ROW_ADDRESS_BITS-1 downto 0);
-            end if;	 
+            end if; 
         end if;  
     end process p_cnt;
 
     s_cnt_pxl_nxt <= s_cnt_pxl + 1;
-    s_cnt_bit_nxt <= s_cnt_bit + 1;
     s_cnt_row_nxt <= s_cnt_row + 1;
 
     -- assign output signal which always correspons to the current pixel (necessary to lookup RGB values in framebuffers and generate RGB0/1 output signals)
@@ -108,7 +111,7 @@ begin
     begin
         s_sel <= (others => '0');
         for i in 0 to COLORDEPTH-1 loop
-            if (((2**i) - 1) < s_cnt_bit) then
+            if (((2**i) - 1) <= s_cnt_bit) then
                 s_sel <= std_logic_vector(to_unsigned(i, log2ceil(COLORDEPTH)));
             end if;
         end loop;

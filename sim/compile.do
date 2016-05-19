@@ -1,8 +1,10 @@
 vlib work;
 
 vcom ../impl/pll.vhd
-vcom ../impl/testram.vhd
+vcom ../rtl/calc_pkg.vhd
+vcom ../rtl/ram.vhd
 vcom ../rtl/uart.vhd
 vcom ../rtl/ctrl.vhd
 vcom ../rtl/matrix.vhd
+vcom ../rtl/toplevel.vhd
 vcom ../tb/matrix_tb.vhd

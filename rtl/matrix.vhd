@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- Matrix Driver entity
--- Last modified: 29.04.2016
+-- Last modified: 19.05.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -38,7 +38,6 @@ entity matrix is
 	
     port (
         s_clk_i     : in  std_logic;    -- clock input
-        s_clk180_i  : in  std_logic;
         s_reset_n_i : in  std_logic;    -- reset input
         s_wobble_i  : in  std_logic;    -- wobble input for brightness dimming
         s_wclk_i    : in std_logic;
@@ -181,7 +180,7 @@ begin
 		 
     -- assign panel control signals to toplevel output signals
     panel_ctrl_signals : for n in 0 to NO_PANEL_ROWS-1 generate
-        s_clk_o(n) <= s_clk180_i;	-- A-D address line outputs for panel row n
+        s_clk_o(n) <= not s_clk_i;	-- A-D address line outputs for panel row n (180° delayed to RGB0/1 timing)
         s_row_o((n+1)*PIXEL_ROW_ADDRESS_BITS-1 downto n*PIXEL_ROW_ADDRESS_BITS) <= s_row;   -- CLK output for panel row n
     --begin
     end generate panel_ctrl_signals;
