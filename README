@@ -84,13 +84,22 @@ V13: BCM bit counter counted 1 step too much -> e.g. for 8 bit colour depth it c
      matrix.vhd:    Remove s_clk180_i input, set s_clk_o outputs to "not s_clk_i" 
      ctrl.vhd:      Change BCM bit counter (formerly overflow counter was used that counted from 0 to 255 at 8bit colordepth, now one counter signal is compared to the endvalue and counting goes from 0 to 254)
                     Change generation of s_sel signal which determines which bit of the RGB data is used for the RGB0/1 outputs -> "if (((2**i) - 1) <= s_cnt_bit) then" -> "<=" instead of "<" in order to write bit 0 only 1 times instead of 2 times
-                    
-     
-     
-## TODO: ##
-Tidy up rtl/matrix.vhd
-     -> further improve bad readability (e.g. change long constant names like C_NO_PIXEL_COLUMNS_PER_PANEL_BIT)
 
+V14: Width of write data signal of RGB data interface changed from 3x8 bits to 3xCOLORDEPTH bits.
+     Global brightness control implemented - the global brightness of the panels can be reduced by the s_brightscale_i signal. Currently the switches SW0 to SW4 are utilized in order to change the brightness with 5 bit resolution.
+     Testbenches for matrix entity updated - one testbench to test RGB data interface, one testbench to test the panel control signals
+     toplevel.vhd:  New input signal s_brightscale_i added, which is synchronized and sampled with 10kHz
+                    UART decode process adapted because RGB data interface write data input width is changed from 3x8 bits to 3xCOLORDEPTH bits
+      matrix.vhd:   Global brightness control input s_brightscale_i added
+                    Framebuffer decode process adapted because width of write data changed, and reset values for write s_waddr and s_ramindex added
+                    Code cleaned up -> commented out code lines/blocks deleted
+      ctrl.vhd:     Global brightness control input s_brightscale_i added
+                    Code cleaned up -> commented out code line/blocks deleted, comments updated
+                    Control signal generation process p_ctrl adapted -> at 100% brightness (s_brightscale_i = 0) the panels get now blanked only during the time were data is latched
+                                                                        at lower brightnesses the panels get partly blanked within the time needed to shift in the RGB data for one panel (32 clock cycles)
+      matrix_panel_control_tb.vhd:  Testbench to simulate the panel control signals -> modelsim -> cd to sim folder -> do compile.do -> do sim_panel_control.do
+      matrix_RGB_interface_tb.vhd:  Testbench to simulate the RGB data interface -> modelsim -> cd to sim folder -> do compile.do -> do sim_RGB_interface.do
+                    
 ## LAST MODIFIED: ##
 V01: 30.03.2016
 V02: 31.03.2016
@@ -106,3 +115,4 @@ V10: 21.04.2016
 V11: 28.04.2016
 V12: 29.04.2016
 V13: 19.05.2016
+V14: 03.06.2016

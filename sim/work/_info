@@ -1,0 +1,486 @@
+m255
+K3
+13
+cModel Technology
+Z0 dC:\Temp\1\adafruitmatrix\sim
+Pcalc_pkg
+Z1 w1461854614
+Z2 dC:\Temp\1\adafruitmatrix\sim
+Z3 8../rtl/calc_pkg.vhd
+Z4 F../rtl/calc_pkg.vhd
+l0
+L21
+VKiJGjMz9Z]O8PZ_@W;J3m1
+Z5 OV;C;10.1d;51
+32
+b1
+Z6 !s108 1464952104.547000
+Z7 !s90 -reportprogress|300|../rtl/calc_pkg.vhd|
+Z8 !s107 ../rtl/calc_pkg.vhd|
+o-O0
+Z9 tExplicit 1
+!s100 M7KlbOl:fU`RUDmgImO=:1
+!i10b 1
+Bbody
+Z10 DPx4 work 8 calc_pkg 0 22 KiJGjMz9Z]O8PZ_@W;J3m1
+l0
+L25
+VCb0:`;J?4Wca`ZmhFm=ed1
+R5
+32
+R6
+R7
+R8
+o-O0
+R9
+nbody
+!s100 i0k3fG9DN3IgbPZKCQ:H52
+!i10b 1
+Ectrl
+Z11 w1464942917
+R10
+Z12 DPx4 ieee 9 math_real 0 22 :iME`dTX54_U49lJNF5JI3
+Z13 DPx4 ieee 11 numeric_std 0 22 O3PF8EB`?j9=z7KT`fn941
+Z14 DPx3 std 6 textio 0 22 5>J:;AW>W0[[dW0I6EN1Q0
+Z15 DPx4 ieee 14 std_logic_1164 0 22 5=aWaoGZSMWIcH0i^f`XF1
+R2
+Z16 8../rtl/ctrl.vhd
+Z17 F../rtl/ctrl.vhd
+l0
+L29
+VKk]4_VWWOD7o>lzbL2fhz2
+R5
+32
+Z18 !s108 1464952104.905000
+Z19 !s90 -reportprogress|300|../rtl/ctrl.vhd|
+Z20 !s107 ../rtl/ctrl.vhd|
+o-O0
+R9
+!s100 NY2^EYOS=me<iKQW@e@Y53
+!i10b 1
+Artl
+R10
+R12
+R13
+R14
+R15
+Z21 DEx4 work 4 ctrl 0 22 Kk]4_VWWOD7o>lzbL2fhz2
+l67
+L52
+V]nYcdWiaJU]d2mHG1H9Kl3
+R5
+32
+R18
+R19
+R20
+o-O0
+R9
+!s100 EObU;k;fF>8WoYX]4g8583
+!i10b 1
+Ematrix
+Z22 w1464942155
+R10
+R12
+R13
+R14
+R15
+R2
+Z23 8../rtl/matrix.vhd
+Z24 F../rtl/matrix.vhd
+l0
+L29
+VEkK]lj]ba7M>cI7CJ4S_01
+R5
+32
+Z25 !s108 1464952104.999000
+Z26 !s90 -reportprogress|300|../rtl/matrix.vhd|
+Z27 !s107 ../rtl/matrix.vhd|
+o-O0
+R9
+!s100 L[RECajNMLliJajcJMJ8`3
+!i10b 1
+Artl
+R21
+Z28 DEx4 work 3 ram 0 22 ?nHL0ITo><[lD_b0UiQz<3
+R10
+R12
+R13
+R14
+R15
+Z29 DEx4 work 6 matrix 0 22 EkK]lj]ba7M>cI7CJ4S_01
+l87
+L55
+V=FWVYE_=9aM4`2Lc1Bco]3
+R5
+32
+R25
+R26
+R27
+o-O0
+R9
+!s100 NjDSZPDQh@f56`N8^eBjM3
+!i10b 1
+Ematrix_panel_control_tb
+Z30 w1464951918
+R10
+R12
+R13
+R14
+R15
+R2
+Z31 8../tb/matrix_panel_control_tb.vhd
+Z32 F../tb/matrix_panel_control_tb.vhd
+l0
+L31
+V9jdOTlfEVNMOm<Q?f;3GP0
+R5
+32
+Z33 !s108 1464952105.202000
+Z34 !s90 -reportprogress|300|../tb/matrix_panel_control_tb.vhd|
+Z35 !s107 ../tb/matrix_panel_control_tb.vhd|
+o-O0
+R9
+!s100 Z=17k]coF3lFlzIJcgZ=60
+!i10b 1
+Asim
+R29
+R10
+R12
+R13
+R14
+R15
+Z36 DEx4 work 23 matrix_panel_control_tb 0 22 9jdOTlfEVNMOm<Q?f;3GP0
+l80
+L46
+VEHcMb;X2W3LzP_=S3cG@m2
+!s100 Rm>>@47UT2iF1hjcJ?2Ab2
+R5
+32
+R33
+R34
+R35
+o-O0
+R9
+!i10b 1
+Cmatrix_panel_control_tb_sim_cfg
+asim
+ematrix_panel_control_tb
+R29
+DAx4 work 23 matrix_panel_control_tb 3 sim 22 EHcMb;X2W3LzP_=S3cG@m2
+R10
+R12
+R13
+R14
+R15
+R36
+R30
+R2
+R31
+R32
+l0
+L141
+VeKGKEgX_a@m<Oll7l9fgA0
+R5
+32
+R33
+R34
+R35
+o-O0
+R9
+!s100 =ZC9SGE9@^RjeP7iYMMWk2
+!i10b 0
+Ematrix_rgb_interface_tb
+Z37 w1464951895
+R10
+R12
+R13
+R14
+R15
+R2
+Z38 8../tb/matrix_RGB_interface_tb.vhd
+Z39 F../tb/matrix_RGB_interface_tb.vhd
+l0
+L31
+V>K5J7P:PX^;j^JM43BTz@3
+!s100 Z5M;@_4M[D1DdCQU=Y_Qz0
+R5
+32
+!i10b 1
+Z40 !s108 1464952105.311000
+Z41 !s90 -reportprogress|300|../tb/matrix_RGB_interface_tb.vhd|
+Z42 !s107 ../tb/matrix_RGB_interface_tb.vhd|
+o-O0
+R9
+Asim
+R29
+R10
+R12
+R13
+R14
+R15
+Z43 DEx4 work 23 matrix_rgb_interface_tb 0 22 >K5J7P:PX^;j^JM43BTz@3
+l80
+L46
+Z44 VE?;09ZoEeiSJJ;H33T5BJ1
+Z45 !s100 k;n_JgHUSA6NT<8]`WJD[3
+R5
+32
+!i10b 1
+R40
+R41
+R42
+o-O0
+R9
+Cmatrix_rgb_interface_tb_sim_cfg
+asim
+ematrix_RGB_interface_tb
+R29
+DAx4 work 23 matrix_rgb_interface_tb 3 sim 22 E?;09ZoEeiSJJ;H33T5BJ1
+R10
+R12
+R13
+R14
+R15
+R43
+R37
+R2
+R38
+R39
+l0
+L141
+VA9HKcO`dAnV3F85NJ<J?G1
+!s100 321<jW0mKjQ=o1mObl?Ea2
+R5
+32
+!i10b 0
+R40
+R41
+R42
+o-O0
+R9
+Ematrix_tb
+Z46 w1464946302
+R10
+R12
+R13
+R14
+R15
+R2
+R38
+R39
+l0
+L31
+VQVdhm=SOi?c34DQ6QJIFM0
+R5
+32
+Z47 !s108 1464951829.583000
+R41
+Z48 !s107 ../tb/matrix_RGB_interface_tb.vhd|
+o-O0
+R9
+!s100 @=1>0b1?3h_[jefh`=cX@1
+!i10b 1
+Asim
+R29
+R10
+R12
+R13
+R14
+R15
+Z49 DEx4 work 9 matrix_tb 0 22 QVdhm=SOi?c34DQ6QJIFM0
+l80
+L46
+VkY<0dh20`1l2:C>JLU<<i0
+R5
+32
+R47
+R41
+R48
+o-O0
+R9
+!s100 bU^o3EP>Ih^DW]X>=BDCM1
+!i10b 1
+Cmatrix_tb_sim_cfg
+asim
+ematrix_tb
+R29
+DAx4 work 9 matrix_tb 3 sim 22 kY<0dh20`1l2:C>JLU<<i0
+R10
+R12
+R13
+R14
+R15
+R49
+R46
+R2
+R38
+R39
+l0
+L141
+VYbP`TmTka=JX5RlA`I;972
+R5
+32
+R47
+R41
+R48
+o-O0
+R9
+!s100 ^kL9XbIAo4T^@JJo0dXEA1
+!i10b 0
+Epll
+Z50 w1463658852
+R14
+R15
+R2
+Z51 8../impl/pll.vhd
+Z52 F../impl/pll.vhd
+l0
+L42
+V=M6;7e=bSWODh`^]Qo21V1
+R5
+32
+Z53 !s108 1464952104.437000
+Z54 !s90 -reportprogress|300|../impl/pll.vhd|
+Z55 !s107 ../impl/pll.vhd|
+o-O0
+R9
+!s100 bG3KoH]7g`N^:Z[0AV^7o1
+!i10b 1
+Asyn
+R14
+R15
+Z56 DEx4 work 3 pll 0 22 =M6;7e=bSWODh`^]Qo21V1
+l131
+L53
+V9E<H9@C=fOH9U6_`M8T[:1
+R5
+32
+R53
+R54
+R55
+o-O0
+R9
+!s100 dK>=YiOfM:PZi]BFYC7hj3
+!i10b 1
+Eram
+Z57 w1463777980
+R10
+R12
+R13
+R14
+R15
+R2
+Z58 8../rtl/ram.vhd
+Z59 F../rtl/ram.vhd
+l0
+L29
+V?nHL0ITo><[lD_b0UiQz<3
+R5
+32
+Z60 !s108 1464952104.640000
+Z61 !s90 -reportprogress|300|../rtl/ram.vhd|
+Z62 !s107 ../rtl/ram.vhd|
+o-O0
+R9
+!s100 ]ZjK:8KT]cUzPL>M<E68_1
+!i10b 1
+Artl
+R10
+R12
+R13
+R14
+R15
+R28
+l62
+L49
+Vdj]?S8Ig_=7UaKz>n<Q^H3
+R5
+32
+R60
+R61
+R62
+o-O0
+R9
+!s100 B;;EaMnUmcc1WAP]ABY^]0
+!i10b 1
+Etoplevel
+Z63 w1464945298
+R10
+R12
+R13
+R14
+R15
+R2
+Z64 8../rtl/toplevel.vhd
+Z65 F../rtl/toplevel.vhd
+l0
+L29
+VchCS7JYZDKO7Me@eMY0XL2
+R5
+32
+Z66 !s108 1464952105.108000
+Z67 !s90 -reportprogress|300|../rtl/toplevel.vhd|
+Z68 !s107 ../rtl/toplevel.vhd|
+o-O0
+R9
+!s100 X^SLS:c8hY:CPLILm_hX=1
+!i10b 1
+Artl
+R56
+R29
+Z69 DEx4 work 4 uart 0 22 3bk;6Xi9fRj:>]]a=9T2f3
+R10
+R12
+R13
+R14
+R15
+DEx4 work 8 toplevel 0 22 chCS7JYZDKO7Me@eMY0XL2
+l93
+L54
+V3>0aeVZLTeB]8l`WbS`>H2
+R5
+32
+R66
+R67
+R68
+o-O0
+R9
+!s100 eI7_956AIP?6dkAo4lZh30
+!i10b 1
+Euart
+Z70 w1461840892
+R13
+R14
+R15
+R2
+Z71 8../rtl/uart.vhd
+Z72 F../rtl/uart.vhd
+l0
+L25
+V3bk;6Xi9fRj:>]]a=9T2f3
+R5
+32
+Z73 !s108 1464952104.781000
+Z74 !s90 -reportprogress|300|../rtl/uart.vhd|
+Z75 !s107 ../rtl/uart.vhd|
+o-O0
+R9
+!s100 @b]`9e8NDo@9>J2k`<Gjm3
+!i10b 1
+Abehavioral
+R13
+R14
+R15
+R69
+l48
+L41
+Vh1d=42:<5P6?3?D6cYU=V1
+R5
+32
+R73
+R74
+R75
+o-O0
+R9
+!s100 YgT?2@ehD9LMG<;=>9zib1
+!i10b 1

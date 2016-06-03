@@ -51,67 +51,118 @@ set_global_assignment -name POWER_PRESET_COOLING_SOLUTION "23 MM HEAT SINK WITH 
 set_global_assignment -name POWER_BOARD_THERMAL_MODEL "NONE (CONSERVATIVE)"
 set_global_assignment -name ENABLE_SIGNALTAP OFF
 set_global_assignment -name USE_SIGNALTAP_FILE output_files/stp1.stp
-set_location_assignment PIN_V5 -to s_data_o[0]
-set_location_assignment PIN_U7 -to s_data_o[1]
-set_location_assignment PIN_W7 -to s_data_o[2]
-set_location_assignment PIN_T8 -to s_data_o[3]
-set_location_assignment PIN_V8 -to s_data_o[4]
-set_location_assignment PIN_Y10 -to s_data_o[5]
-set_location_assignment PIN_V6 -to s_data_o[6]
-set_location_assignment PIN_V7 -to s_data_o[7]
-set_location_assignment PIN_Y7 -to s_data_o[8]
-set_location_assignment PIN_U9 -to s_data_o[9]
-set_location_assignment PIN_T9 -to s_data_o[10]
-set_location_assignment PIN_U10 -to s_data_o[11]
-set_location_assignment PIN_W15 -to s_data_o[12]
-set_location_assignment PIN_V15 -to s_data_o[13]
-set_location_assignment PIN_U15 -to s_data_o[14]
-set_location_assignment PIN_Y17 -to s_data_o[15]
-set_location_assignment PIN_W17 -to s_data_o[16]
-set_location_assignment PIN_AA17 -to s_data_o[17]
-set_location_assignment PIN_AB5 -to s_data_o[18]
-set_location_assignment PIN_AA5 -to s_data_o[19]
-set_location_assignment PIN_AB8 -to s_data_o[20]
-set_location_assignment PIN_AB10 -to s_data_o[21]
-set_location_assignment PIN_AA10 -to s_data_o[22]
-set_location_assignment PIN_AB13 -to s_data_o[23]
-set_location_assignment PIN_U13 -to s_row_o[0]
-set_location_assignment PIN_V12 -to s_row_o[1]
-set_location_assignment PIN_Y13 -to s_row_o[2]
-set_location_assignment PIN_W13 -to s_row_o[3]
-set_location_assignment PIN_U12 -to s_row_o[4]
-set_location_assignment PIN_T12 -to s_row_o[5]
-set_location_assignment PIN_T14 -to s_row_o[6]
-set_location_assignment PIN_R14 -to s_row_o[7]
-set_location_assignment PIN_AB18 -to s_row_o[8]
-set_location_assignment PIN_AA18 -to s_row_o[9]
-set_location_assignment PIN_AA19 -to s_row_o[10]
-set_location_assignment PIN_AB19 -to s_row_o[11]
-set_location_assignment PIN_AA14 -to s_row_o[12]
-set_location_assignment PIN_AB14 -to s_row_o[13]
-set_location_assignment PIN_AA15 -to s_row_o[14]
-set_location_assignment PIN_AB15 -to s_row_o[15]
+
+# Panel Row 1 Locations
+set_location_assignment PIN_AA15 -to s_data_o[0]   # Panel Row 1 R0
+set_location_assignment PIN_AA14 -to s_data_o[1]   # Panel Row 1 G0
+set_location_assignment PIN_AB13 -to s_data_o[2]   # Panel Row 1 B0
+set_location_assignment PIN_AB15 -to s_data_o[3]   # Panel Row 1 R1
+set_location_assignment PIN_AB14 -to s_data_o[4]   # Panel Row 1 G1
+set_location_assignment PIN_AA13 -to s_data_o[5]   # Panel Row 1 B1
+set_location_assignment PIN_AB10 -to s_row_o[0]    # Panel Row 1 A
+set_location_assignment PIN_AB8 -to s_row_o[1]     # Panel Row 1 B
+set_location_assignment PIN_AA10 -to s_row_o[2]    # Panel Row 1 C
+set_location_assignment PIN_AA8 -to s_row_o[3]     # Panel Row 1 D
+set_location_assignment PIN_AB5 -to s_oe_o[0]      # Panel Row 1 OE
+set_location_assignment PIN_AB16 -to s_lat_o[0]    # Panel Row 1 LAT
+set_location_assignment PIN_AB3 -to s_clk_o[0]     # Panel Row 1 CLK
+
+# Panel Row 2 Locations
+set_location_assignment PIN_T8 -to s_data_o[6]     # Panel Row 2 R0
+set_location_assignment PIN_Y10 -to s_data_o[7]    # Panel Row 2 G0
+set_location_assignment PIN_R10 -to s_data_o[8]    # Panel Row 2 B0
+set_location_assignment PIN_V8 -to s_data_o[9]     # Panel Row 2 R1
+set_location_assignment PIN_W10 -to s_data_o[10]   # Panel Row 2 G1
+set_location_assignment PIN_V11 -to s_data_o[11]   # Panel Row 2 B1
+set_location_assignment PIN_U13 -to s_row_o[4]     # Panel Row 2 A
+set_location_assignment PIN_Y13 -to s_row_o[5]     # Panel Row 2 B
+set_location_assignment PIN_V12 -to s_row_o[6]     # Panel Row 2 C
+set_location_assignment PIN_W13 -to s_row_o[7]     # Panel Row 2 D
+set_location_assignment PIN_V14 -to s_oe_o[1]      # Panel Row 2 OE
+set_location_assignment PIN_U7 -to s_lat_o[1]      # Panel Row 2 LAT
+set_location_assignment PIN_AA3 -to s_clk_o[1]     # Panel Row 2 CLK
+
+# Panel Row 3 Locations
+set_location_assignment PIN_AA19 -to s_data_o[12]    # Panel Row 3 R0
+set_location_assignment PIN_AB18 -to s_data_o[13]    # Panel Row 3 G0
+set_location_assignment PIN_AA17 -to s_data_o[14]    # Panel Row 3 B0
+set_location_assignment PIN_AB19 -to s_data_o[15]    # Panel Row 3 R1
+set_location_assignment PIN_AA18 -to s_data_o[16]    # Panel Row 3 G1
+set_location_assignment PIN_AB17 -to s_data_o[17]    # Panel Row 3 B1
+set_location_assignment PIN_Y17 -to s_row_o[8]       # Panel Row 3 A
+set_location_assignment PIN_U15 -to s_row_o[9]       # Panel Row 3 B
+set_location_assignment PIN_W17 -to s_row_o[10]      # Panel Row 3 C
+set_location_assignment PIN_T15 -to s_row_o[11]      # Panel Row 3 D
+set_location_assignment PIN_W15 -to s_oe_o[2]        # Panel Row 3 OE
+set_location_assignment PIN_AA20 -to s_lat_o[2]      # Panel Row 3 LAT
+set_location_assignment PIN_R16 -to s_clk_o[2]       # Panel Row 3 CLK
+
+# Panel Row 4 Locations
+set_location_assignment PIN_U9 -to s_data_o[18]    # Panel Row 4 R0 
+set_location_assignment PIN_U10 -to s_data_o[19]    # Panel Row 4 G0
+set_location_assignment PIN_R11 -to s_data_o[20]    # Panel Row 4 B0
+set_location_assignment PIN_T9 -to s_data_o[21]   # Panel Row 4 R1
+set_location_assignment PIN_T10 -to s_data_o[22]   # Panel Row 4 G1
+set_location_assignment PIN_R12 -to s_data_o[23]   # Panel Row 4 B1
+set_location_assignment PIN_U12 -to s_row_o[12]    # Panel Row 4 A
+set_location_assignment PIN_T14 -to s_row_o[13]    # Panel Row 4 B
+set_location_assignment PIN_T12 -to s_row_o[14]    # Panel Row 4 C
+set_location_assignment PIN_R14 -to s_row_o[15]    # Panel Row 4 D
+set_location_assignment PIN_AA7 -to s_oe_o[3]      # Panel Row 4 OE
+set_location_assignment PIN_V7 -to s_lat_o[3]     # Panel Row 4 LAT
+set_location_assignment PIN_T16 -to s_clk_o[3]      # Panel Row 4 CLK
+
+# Other Locations
 set_location_assignment PIN_H2 -to s_reset_n_i
 set_location_assignment PIN_J6 -to s_wobble_i
 set_location_assignment PIN_G21 -to s_clk_i
-set_location_assignment PIN_AA3 -to s_clk_o[0]
-set_location_assignment PIN_T16 -to s_clk_o[1]
-set_location_assignment PIN_R16 -to s_clk_o[2]
-set_location_assignment PIN_AB3 -to s_clk_o[3]
-set_location_assignment PIN_AA4 -to s_lat_o[0]
-set_location_assignment PIN_AA9 -to s_lat_o[1]
-set_location_assignment PIN_AB20 -to s_lat_o[2]
-set_location_assignment PIN_AA16 -to s_lat_o[3]
-set_location_assignment PIN_V14 -to s_oe_o[0]
-set_location_assignment PIN_AA7 -to s_oe_o[1]
-set_location_assignment PIN_AA20 -to s_oe_o[2]
-set_location_assignment PIN_AB16 -to s_oe_o[3]
 set_location_assignment PIN_AB9 -to s_uart_rx_i
-set_location_assignment PIN_J6 -to s_brightscale_i[0]
-set_location_assignment PIN_H5 -to s_brightscale_i[1]
-set_location_assignment PIN_H6 -to s_brightscale_i[2]
-set_location_assignment PIN_G4 -to s_brightscale_i[3]
-set_location_assignment PIN_G5 -to s_brightscale_i[4]
+
+
+set_location_assignment PIN_AA16 -to GND[0]  # Panel 1 Function GPIO0_D1
+set_location_assignment PIN_AA5  -to GND[1]  # Panel 1 Function GPIO0_D13
+set_location_assignment PIN_AB4  -to GND[2]  # Panel 1 Function GPIO0_D14
+
+set_location_assignment PIN_AA4  -to GND[3]  # Panel 2 Function GPIO0_D15
+set_location_assignment PIN_U14  -to GND[4]  # Panel 2 Function GPIO0_D17
+set_location_assignment PIN_W7   -to GND[5]  # Panel 2 Function GPIO0_D28
+set_location_assignment PIN_W6   -to GND[6]  # Panel 2 Function GPIO0_D29
+set_location_assignment PIN_V5   -to GND[7]  # Panel 2 Function GPIO0_D30
+
+set_location_assignment PIN_AB20 -to GND[8] # Panel 3 Function GPIO1_D1
+set_location_assignment PIN_V15  -to GND[9] # Panel 3 Function GPIO1_D13
+set_location_assignment PIN_AB9  -to GND[10] # Panel 3 Function GPIO1_D14
+
+set_location_assignment PIN_AA9  -to GND[11] # Panel 4 Function GPIO1_D15
+set_location_assignment PIN_AB7  -to GND[12] # Panel 4 Function GPIO1_D17
+set_location_assignment PIN_Y7   -to GND[13] # Panel 4 Function GPIO1_D28
+set_location_assignment PIN_U8   -to GND[14] # Panel 4 Function GPIO1_D29
+set_location_assignment PIN_V6   -to GND[15] # Panel 4 Function GPIO1_D30
+
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[0]  # Panel 1 Function GPIO0_D1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[1]  # Panel 1 Function GPIO0_D13
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[2]  # Panel 1 Function GPIO0_D14
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL"  -to GND[3]  # Panel 2 Function GPIO0_D15
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL"  -to GND[4]  # Panel 2 Function GPIO0_D17
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL"  -to GND[5]  # Panel 2 Function GPIO0_D28
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL"  -to GND[6]  # Panel 2 Function GPIO0_D29
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL"  -to GND[7]  # Panel 2 Function GPIO0_D30
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[8] # Panel 3 Function GPIO1_D1
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[9] # Panel 3 Function GPIO1_D13
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[10] # Panel 3 Function GPIO1_D14
+
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[11] # Panel 4 Function GPIO1_D15
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[12] # Panel 4 Function GPIO1_D17
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[13] # Panel 4 Function GPIO1_D28
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[14] # Panel 4 Function GPIO1_D29
+set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to GND[15] # Panel 4 Function GPIO1_D30
+
+
+
+
 set_global_assignment -name PARTITION_NETLIST_TYPE SOURCE -section_id Top
 set_global_assignment -name PARTITION_FITTER_PRESERVATION_LEVEL PLACEMENT_AND_ROUTING -section_id Top
 set_global_assignment -name PARTITION_COLOR 16764057 -section_id Top
@@ -210,11 +261,6 @@ set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_lat_o[3]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_oe_o[2]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_oe_o[3]
 set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_uart_rx_i
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_brightscale_i[0]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_brightscale_i[1]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_brightscale_i[2]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_brightscale_i[3]
-set_instance_assignment -name IO_STANDARD "3.3-V LVTTL" -to s_brightscale_i[4]
 set_global_assignment -name VHDL_FILE ../rtl/toplevel.vhd
 set_global_assignment -name VHDL_FILE ../rtl/matrix.vhd
 set_global_assignment -name VHDL_FILE ../rtl/ctrl.vhd

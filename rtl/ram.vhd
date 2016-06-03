@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- RAM entity (simple dual-port RAM with two read/write addresses and clocks)
--- Last modified: 28.04.2016
+-- Last modified: 20.05.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -39,7 +39,7 @@ entity ram is
         wclk	: in std_logic;
         raddr	: in std_logic_vector(log2ceil(DATA_RANGE)-1 downto 0);
         waddr	: in std_logic_vector(log2ceil(DATA_RANGE)-1 downto 0);
-        data	: in std_logic_vector(DATA_WIDTH-1 downto 0);
+        wdata	: in std_logic_vector(DATA_WIDTH-1 downto 0);
         we		: in std_logic := '1';
         q		: out std_logic_vector(DATA_WIDTH -1 downto 0)
     );
@@ -65,7 +65,7 @@ begin
 	begin
         if(rising_edge(wclk)) then 
             if(we = '1') then
-                ram(to_integer(unsigned(waddr))) <= data;
+                ram(to_integer(unsigned(waddr))) <= wdata;
             end if;
         end if;
     end process;

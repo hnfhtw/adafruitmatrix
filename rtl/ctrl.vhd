@@ -16,7 +16,7 @@
 -- along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 -- LED matrix control entity
--- Last modified: 19.05.2016
+-- Last modified: 03.06.2016
 
 library ieee;
 use ieee.std_logic_1164.all;
@@ -37,14 +37,14 @@ entity ctrl is
     );
 
     port (
-        s_clk_i       : in  std_logic;
-        s_reset_n_i   : in  std_logic;
-        s_addr_o      : out std_logic_vector(PIXEL_ROW_ADDRESS_BITS + log2ceil(NO_PANEL_COLUMNS) + log2ceil(NO_PIXEL_COLUMNS_PER_PANEL)-1 downto 0);    -- 11 bit wide (10 downto 0)
-        s_row_o       : out std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);               -- 4 bit wide (3 downto 0)
-        s_sel_o       : out std_logic_vector(log2ceil(COLORDEPTH)-1 downto 0);                 -- 3 bit wide (2 downto 0)
-        s_brightscale : in  std_logic_vector(log2ceil(NO_PIXEL_COLUMNS_PER_PANEL)-1 downto 0); -- 5 bit wide (4 downto 0)
-        s_oe_o        : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);
-        s_lat_o       : out std_logic_vector(NO_PANEL_ROWS-1 downto 0)
+        s_clk_i         : in  std_logic;
+        s_reset_n_i     : in  std_logic;
+        s_brightscale_i : in  std_logic_vector(log2ceil(NO_PIXEL_COLUMNS_PER_PANEL)-1 downto 0); -- global brightness control input, panels with 32 pixel columns: 5 bit wide (4 downto 0) - range from 0 to 31
+        s_addr_o        : out std_logic_vector(PIXEL_ROW_ADDRESS_BITS + log2ceil(NO_PANEL_COLUMNS) + log2ceil(NO_PIXEL_COLUMNS_PER_PANEL)-1 downto 0);    -- 4x4 panels: 11 bit wide (10 downto 0)
+        s_row_o         : out std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);               -- row address output, panels with 4 row address lines: 4 bit wide (3 downto 0)
+        s_sel_o         : out std_logic_vector(log2ceil(COLORDEPTH)-1 downto 0);                 -- BCM bitplane selection output, colordepth 6 bits per color: 3 bit wide (2 downto 0) - to count from 0 to 5
+        s_oe_o          : out std_logic_vector(NO_PANEL_ROWS-1 downto 0);                        -- output enable signal - one for each panel chain/row
+        s_lat_o         : out std_logic_vector(NO_PANEL_ROWS-1 downto 0)                         -- latch signal - one for each panel chain/row
     );
     
 end entity ctrl;
@@ -54,12 +54,12 @@ architecture rtl of ctrl is
     constant C_NO_PIXEL_COLUMNS_PER_PANEL_BIT   : natural := log2ceil(NO_PIXEL_COLUMNS_PER_PANEL); -- number of bits necessary to represent NO_PIXEL_COLUMNS_PER_PANEL (32 at the current panels)
     constant C_NO_PANEL_ROWS_BIT                : natural := log2ceil(NO_PANEL_ROWS);              -- number of bits necessary to represent NO_PANEL_ROWS
 	 	 
-    signal s_cnt_row, s_cnt_row_nxt             : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);            -- 5 bit wide (4 downto 0) -> can count from 0 to 31
-    signal s_cnt_bit                            : unsigned(COLORDEPTH downto 0);                        -- 9 bit wide (8 downto 0) -> can count from 0 to 511 (if COLORDEPTH = 8)
-    signal s_cnt_pan                            : unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);            -- 3 bit wide (2 downto 0) -> can count from 0 to 7	
-    signal s_cnt_pxl, s_cnt_pxl_nxt             : unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);  -- 6 bit wide (5 downto 0) -> can count from 0 to 63
+    signal s_cnt_row, s_cnt_row_nxt             : unsigned(PIXEL_ROW_ADDRESS_BITS downto 0);            -- row counter, panels with 4 row address lines: 5 bit wide (4 downto 0) -> can count from 0 to 31
+    signal s_cnt_bit                            : unsigned(COLORDEPTH downto 0);                        -- BCM bit counter, at 6 bit color depth: 7 bit wide (6 downto 0) -> can count from 0 to 127 (if COLORDEPTH = 6)
+    signal s_cnt_pan                            : unsigned(C_NO_PANEL_COLUMNS_BIT downto 0);            -- panel counter, at 4 panels per chain: 3 bit wide (2 downto 0) -> can count from 0 to 7	
+    signal s_cnt_pxl, s_cnt_pxl_nxt             : unsigned(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT downto 0);  -- pixel counter, at panels with 32 pixel columns: 6 bit wide (5 downto 0) -> can count from 0 to 63
 
-    signal s_sel : std_logic_vector(log2ceil(COLORDEPTH)-1 downto 0);                  -- 3 bit wide (2 downto 0) -> can count from 0 to 7
+    signal s_sel : std_logic_vector(log2ceil(COLORDEPTH)-1 downto 0);                  -- BCM bitplane selection signal, at 6 bits per color: 6 bits wide (5 downto 0)
     signal s_row : std_logic_vector(PIXEL_ROW_ADDRESS_BITS-1 downto 0);                -- 4 bit wide (3 downto 0) -> can count from 0 to 15
     signal s_oe  : std_logic_vector(NO_PANEL_ROWS-1 downto 0);
     signal s_lat : std_logic_vector(NO_PANEL_ROWS-1 downto 0);
@@ -101,7 +101,8 @@ begin
     s_cnt_pxl_nxt <= s_cnt_pxl + 1;
     s_cnt_row_nxt <= s_cnt_row + 1;
 
-    -- assign output signal which always correspons to the current pixel (necessary to lookup RGB values in framebuffers and generate RGB0/1 output signals)
+    -- assign output signal (RAM read address) which always correspons to the current pixel (necessary to lookup RGB values in framebuffers and generate RGB0/1 output signals)
+    -- read address format (for 4x4 panels with 32x32 pixel each): PP-RRRR-XXXXX
     s_addr_o <= std_logic_vector(s_cnt_pan(C_NO_PANEL_COLUMNS_BIT-1 downto 0)) &
                 std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0)) &
                 std_logic_vector(s_cnt_pxl(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT-1 downto 0));    
@@ -134,17 +135,14 @@ begin
             s_lat <= (others => '0');
             s_oe  <= (others => '0');
 
-            -- hacky brightness scaling: enable just for the more significant bits 
-            -- with increasing value of brightscale
-            -- FIXME: reduces color depth, would be better to change overall duty cycle
-            -- or remove entirely -- it is not really necessary
-            -- HN: brightness scaling -> enable the panel only for part of the time (determined by difference of 31 - s_brightscale
-            if (s_cnt_pxl >= ((NO_PIXEL_COLUMNS_PER_PANEL-1) - unsigned(s_brightscale))) then
+            -- global brightness control - blank panel for a part of the time needed to shift in the RGB data for one panel, determined by global brightness control signal
+            if (s_cnt_pxl > ((NO_PIXEL_COLUMNS_PER_PANEL-1) - unsigned(s_brightscale_i))) then
                 s_oe <= (others => '1');
             end if;
 
             if((s_cnt_pan = NO_PANEL_COLUMNS-1) and s_cnt_pxl_nxt(C_NO_PIXEL_COLUMNS_PER_PANEL_BIT) = '1') then
                 s_lat <= (others => '1');
+                s_oe <= (others => '1');
                 s_row <= std_logic_vector(s_cnt_row(PIXEL_ROW_ADDRESS_BITS-1 downto 0));
             end if;
         end if;
