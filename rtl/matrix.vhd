@@ -1,6 +1,6 @@
 -- ADAFRUITMATRIX -- FPGA design to drive combinations of 32x32 RGB LED Matrices
 --
--- Copyright (C) 2016  Harald Netzer (Initial Version by Christian Fibich)
+-- Copyright (C) 2016  Harald Netzer (Initial Version by C. Fibich)
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by
